@@ -1,0 +1,59 @@
+{
+  "name": "seeonwall",
+  "version": "0.1.0",
+  "description": "Show shoppers a poster on their own wall, at true scale. The seeonwall.com widget for React and headless storefronts.",
+  "keywords": [
+    "seeonwall",
+    "poster",
+    "wall-art",
+    "product-visualization",
+    "ecommerce",
+    "headless-commerce",
+    "shopify",
+    "hydrogen",
+    "storefront"
+  ],
+  "license": "MIT",
+  "author": "Mateusz Dziurdziak",
+  "homepage": "https://seeonwall.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seeonwall/seeonwall-npm.git"
+  },
+  "bugs": {
+    "url": "https://github.com/seeonwall/seeonwall-npm/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1",
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
+  }
+}
