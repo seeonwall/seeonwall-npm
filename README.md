@@ -15,7 +15,51 @@ npm install seeonwall
 
 You need a shop id from the [SeeOnWall dashboard](https://seeonwall.com).
 
-## Use
+## React
+
+```tsx
+import { useSeeOnWall, SeeOnWallButton } from 'seeonwall/react'
+
+function ProductPage({ product }) {
+  useSeeOnWall({ shopId: 'YOUR_SHOP_ID' })
+
+  return (
+    <SeeOnWallButton
+      posterUrl={product.image}
+      posterTitle={product.title}
+      posterWidth={50}
+      posterHeight={70}
+      posterSizes={['30x40', '50x70', '70x100']}
+    />
+  )
+}
+```
+
+`useSeeOnWall` loads the widget and stops it when the last component using it
+unmounts. It counts its callers, so calling it in several components is safe, and
+it survives StrictMode's double-invoked effects.
+
+`SeeOnWallButton` renders an empty mount and lets the widget put the button
+inside. It deliberately does not render its own button — that keeps the logo,
+the allowed-domain check, the theme match and the localised label in the code
+that already implements all four.
+
+React is a peer dependency, so you use whichever version you already have.
+
+### Button props
+
+Everything in `PosterParams`, plus:
+
+| prop | | |
+|---|---|---|
+| `posterSizes` | `string[]` or `string` | An array is joined with commas for you. |
+| `className`, `style` | | Applied to the mount element. |
+| `backgroundColor`, `textColor`, `borderRadius`, `borderColor` | | Button appearance. |
+| `buttonClassName` | | Your theme's classes, added after the widget's own. |
+| `matchButton` | selector | Copies shape and typography from one of your own buttons. |
+| `matchColors` | boolean | Also copies its colours. |
+
+## Vanilla JavaScript
 
 ```js
 import { load } from 'seeonwall'
@@ -78,6 +122,13 @@ the part of your app that uses SeeOnWall.
 | `setLanguage(lang)` | Changes language at runtime. Only needed if your language switcher does not update `<html lang>`. |
 | `destroy()` | Stops the widget and removes everything it added. |
 | `snippetVersion()` | The loaded widget version, or `null`. Useful in bug reports. |
+
+From `seeonwall/react`:
+
+| | |
+|---|---|
+| `useSeeOnWall(options)` | Loads the widget for as long as a component needs it. Same options as `load()`. |
+| `SeeOnWallButton` | Renders a mount for the widget's button. |
 
 ### `load(options)`
 
