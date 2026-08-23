@@ -34,15 +34,12 @@ jobs:
       - run: npm run typecheck
       - run: npm test
 
-      # BOOTSTRAP ONLY. Trusted publishing is configured in a package's settings
-      # page on npmjs.com, which does not exist until the package does — so the
-      # first publish cannot use OIDC. It uses a granular access token instead,
-      # which still produces provenance because the repository is public and the
-      # job mints an id-token.
+      # The job authenticates with the OIDC token that the permission above mints.
+      # npm exchanges the token for a short-lived credential. No npm token exists
+      # in the secrets of this repository. npm also makes the provenance
+      # attestation without a flag.
       #
-      # After 0.1.0 is on the registry: configure the trusted publisher on
-      # npmjs.com, revoke the token, and delete both the secret and the `env`
-      # block below. The publish step itself does not change.
+      # Version 0.1.0 used a granular access token, because npm cannot configure
+      # a trusted publisher for a package that does not exist. That token is
+      # revoked. Refer to ADR 143.
       - run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
