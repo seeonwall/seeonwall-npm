@@ -1,0 +1,70 @@
+# Dependabot — version and security updates.
+#
+# This repository publishes the `seeonwall` package with npm provenance. A
+# consumer trusts the attestation, thus the integrity of the build chain is the
+# point here. A compromised action or build tool could put bad code into an
+# artifact that carries a valid attestation.
+#
+# The package has no runtime dependencies. Every npm entry below is a
+# development dependency, and no update to one of them reaches a consumer.
+#
+# The actions in ci.yml and publish.yml are pinned to a commit SHA. A SHA never
+# moves, thus Dependabot is the only mechanism that makes those pins current.
+#
+# Noise control: minor and patch updates become one pull request each week.
+# A major update stays alone, because a person must read its changelog.
+#
+# There is one branch in this repository, so a pull request targets `main`. The
+# CI workflow runs the typecheck, the tests and the build on that pull request.
+
+version: 2
+
+updates:
+  # ── npm (development dependencies only) ──────────────────────────────────
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Warsaw
+    # A version must be 7 days old before Dependabot proposes it. A compromised
+    # release — a typosquat, or a hijacked maintainer account — is usually found
+    # and removed inside that time. A Dependabot *security* update ignores the
+    # cooldown, thus a fix for a real CVE does not wait.
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: deps
+    groups:
+      minor-and-patch:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
+
+  # ── GitHub Actions ───────────────────────────────────────────────────────
+  # publish.yml mints the OIDC token that npm exchanges for the credential that
+  # publishes the package. This is the most valuable entry in the file.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "05:00"
+      timezone: Europe/Warsaw
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns:
+          - "*"
