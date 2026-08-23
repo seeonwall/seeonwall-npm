@@ -22,64 +22,86 @@ export interface PosterParams {
   posterUrl: string
   posterTitle?: string
   /**
-   * Fallback unit for any value here that does not state its own (ADR 094).
-   * Defaults to "cm". A value that spells out its unit — "24cm", "10in", "a4" —
-   * is unaffected by this, so setting it shop-wide can never change the meaning
-   * of a number that was already explicit.
+   * The unit for a value in this object that does not give one. Refer to
+   * ADR 094. The default is "cm".
    *
-   * Also seeds the unit the shopper is shown for wall, frame and mat
-   * measurements — they can still switch it in the visualizer.
+   * A value that gives its own unit does not change. Examples are "24cm",
+   * "10in" and "a4". Thus a shop-wide unit cannot change the meaning of a
+   * number that was already complete.
+   *
+   * This value also selects the first unit for the wall, the frame and the mat.
+   * The shopper can select a different unit in the visualizer.
    */
   sizeUnit?: SizeUnit
   /**
-   * Poster width. Either a number in {@link sizeUnit}, or a string carrying its
-   * own unit — "24cm", "10in", "29,7 cm", '11"' — or a named format such as
-   * "a4", which resolves to that format's width (21cm). Declare a named poster
-   * by writing the same name in {@link posterHeight}.
+   * The width of the poster. Give one of these three forms:
+   *
+   * - A number in the unit of {@link sizeUnit}.
+   * - A string with its own unit, for example "24cm", "10in", "29,7 cm" or '11"'.
+   * - The name of a format, for example "a4". The width of A4 is 21cm.
+   *
+   * To declare a poster by name, write the same name in {@link posterHeight}.
    */
   posterWidth?: number | string
-  /** Poster height. Same forms as {@link posterWidth}; "a4" here is 29.7cm. */
+  /**
+   * The height of the poster. The forms are those of {@link posterWidth}. The
+   * height of A4 is 29.7cm.
+   */
   posterHeight?: number | string
   /**
-   * Comma-separated list of available poster sizes. Each entry is a "WxH" pair
-   * that may carry its own unit, or a named format: "30x40,50x70",
-   * "12x16in,18x24in", "a4,a3,50x70cm". Entries without a unit fall back to
-   * {@link sizeUnit}.
-   * When present with more than one entry, the visualizer shows a size selector.
+   * The sizes that the shopper can select. Write them in one string and put a
+   * comma between them.
+   *
+   * Each item is a "WxH" pair or the name of a format. An item can give its own
+   * unit. Examples are "30x40,50x70", "12x16in,18x24in" and "a4,a3,50x70cm". An
+   * item without a unit uses {@link sizeUnit}.
+   *
+   * The visualizer shows a size selector when there is more than one item.
    */
   posterSizes?: string
   /**
-   * Merchant-declared sub-rectangle of the poster image holding the actual artwork,
-   * as "left,top,width,height" percentages (ADR 092).
+   * The part of the image that holds the artwork. Write four percentages and
+   * put a comma between them: the left edge, the top edge, the width and the
+   * height. Refer to ADR 092.
    *
-   * Shops sell with mockup images — the print centred on a coloured field, often
-   * framed — and rendering the whole image makes the print come out too small.
-   * Forwarded verbatim: the visualizer parses it and ignores anything malformed, so a
-   * typo in a theme setting degrades to the uncropped rendering rather than breaking.
+   * Many shops sell with a mockup image. The print is in the middle of a
+   * coloured field, and often it has a frame. The print becomes too small if
+   * the visualizer uses the full image.
+   *
+   * The widget sends this value without a change. The visualizer reads it and
+   * ignores a value that it cannot read. Thus an error in a theme setting gives
+   * the full image. It does not stop the preview.
    */
   posterInset?: string
   /**
-   * Explicit product page URL for this poster. When set, bookmarks link to this
-   * URL instead of the page where the button was clicked (originPageUrl).
-   * Useful on listing/search pages where each poster has its own detail page.
+   * The address of the product page for this poster.
+   *
+   * A bookmark uses this address. Without it, a bookmark uses the address of
+   * the page that holds the button. Give this value on a list page or a search
+   * page, where each poster has its own page.
    */
   productPageUrl?: string
   /**
-   * Per-button language override (BCP-47 tag, e.g. "pl", "de").
-   * Read from data-lang on the .seeonwall-button element.
-   * When set, this language is used for the button label and forwarded to the
-   * visualizer iframe, overriding the global config.lang for this button only.
+   * The language for this button only. Write a BCP-47 tag, for example "pl" or
+   * "de". The widget reads it from the `data-lang` attribute of the mount.
+   *
+   * The widget uses this language for the label of the button, and it sends the
+   * language to the visualizer. This value replaces the language of the shop
+   * for this button. It does not change the other buttons.
    */
   lang?: string
   /**
-   * Width in centimetres of the frame the preview starts with. Omitted or 0 means
-   * the poster previews unframed, which is what most shops sell — set this only if
-   * the price on the page includes a frame. Shoppers can still add or remove one.
+   * The width in centimetres of the frame that the preview starts with.
+   *
+   * The preview shows no frame if this value is absent or 0. Most shops sell a
+   * print without a frame. Give this value only if the price on the page
+   * includes a frame. The shopper can add a frame or remove it.
    */
   frameDefaultCm?: number
   /**
-   * Hex colour of that default frame (e.g. "#3E2723"). Ignored unless
-   * frameDefaultCm is greater than 0. Defaults to black.
+   * The colour of that frame, as a hex value, for example "#3E2723". The widget
+   * ignores this value if {@link frameDefaultCm} is 0 or absent. The default is
+   * black.
    */
   frameDefaultColor?: string
 }
