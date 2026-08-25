@@ -104,4 +104,15 @@ export interface PosterParams {
    * black.
    */
   frameDefaultColor?: string
+  /**
+   * The name of a frame that this shop sells (ADR 162).
+   *
+   * The widget reads it from the `data-frame-preset` attribute of the mount. It selects a frame
+   * from the catalogue of the shop, and the preview opens with the width and the colour of that
+   * frame. This value beats {@link frameDefaultCm} and {@link frameDefaultColor}.
+   *
+   * The value is the name that the merchant gave the frame in the admin portal. A name that no
+   * frame carries is ignored, and the two values above then apply.
+   */
+  framePreset?: string
 }

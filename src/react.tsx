@@ -131,6 +131,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     lang,
     frameDefaultCm,
     frameDefaultColor,
+    framePreset,
     backgroundColor,
     textColor,
     borderRadius,
@@ -158,6 +159,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-lang', lang)
   attr(attributes, 'data-frame-default-cm', frameDefaultCm)
   attr(attributes, 'data-frame-default-color', frameDefaultColor)
+  attr(attributes, 'data-frame-preset', framePreset)
   attr(attributes, 'data-bg-color', backgroundColor)
   attr(attributes, 'data-text-color', textColor)
   attr(attributes, 'data-border-radius', borderRadius)

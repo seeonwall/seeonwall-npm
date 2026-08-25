@@ -187,6 +187,35 @@ describe('SeeOnWallButton', () => {
     expect(mount?.hasAttribute('data-match-colors')).toBe(false)
   })
 
+  it('passes the framing settings', async () => {
+    // A prop that reaches no attribute is a prop that does nothing, and the type says it works.
+    // `framePreset` names a frame from the catalogue of the shop and beats the two values
+    // beside it, so a silent drop here previews the wrong frame.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton
+        posterUrl="https://shop.example/p.jpg"
+        frameDefaultCm={2}
+        frameDefaultColor="#3E2723"
+        framePreset="Oak"
+      />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    expect(mount?.getAttribute('data-frame-default-cm')).toBe('2')
+    expect(mount?.getAttribute('data-frame-default-color')).toBe('#3E2723')
+    expect(mount?.getAttribute('data-frame-preset')).toBe('Oak')
+  })
+
+  it('leaves out a frame preset that you do not give', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(<SeeOnWallButton posterUrl="https://shop.example/p.jpg" />)
+
+    expect(container.querySelector('.seeonwall-button')?.hasAttribute('data-frame-preset')).toBe(false)
+  })
+
   it('keeps your own class next to the class of the widget', async () => {
     const { SeeOnWallButton } = await loadModule()
 
