@@ -5,6 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { StorefrontSessionState } from './index.js'
 
 type Loader = typeof import('./index.js')
 
@@ -19,6 +20,9 @@ function makeSnippet() {
     open: vi.fn(),
     close: vi.fn(),
     setLanguage: vi.fn(),
+    isSessionReady: vi.fn(() => false),
+    refreshSessionState: vi.fn(async (): Promise<StorefrontSessionState> => 'none'),
+    on: vi.fn(() => vi.fn()),
     version: '9.9.9',
   }
 }
@@ -253,5 +257,26 @@ describe('destroy() while load() is still in progress', () => {
     expect(scripts).toHaveLength(1)
     expect(snippet.destroy).not.toHaveBeenCalled()
     expect(loader.snippetVersion()).toBe('9.9.9')
+  })
+})
+
+describe('storefront readiness API', () => {
+  it('proxies readiness reads and subscriptions after loading the snippet', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    ;(snippet.isSessionReady as ReturnType<typeof vi.fn>).mockReturnValue(true)
+    ;(snippet.refreshSessionState as ReturnType<typeof vi.fn>).mockResolvedValue('ready')
+    const listener = vi.fn()
+    const unsubscribe = loader.on('session-change', listener)
+
+    expect(loader.isSessionReady()).toBe(true)
+    await expect(loader.refreshSessionState()).resolves.toBe('ready')
+    expect(snippet.on).toHaveBeenCalledWith('session-change', listener)
+
+    unsubscribe()
+    const nestedUnsubscribe = (snippet.on as ReturnType<typeof vi.fn>).mock.results[0]?.value as ReturnType<typeof vi.fn>
+    expect(nestedUnsubscribe).toHaveBeenCalledTimes(1)
   })
 })

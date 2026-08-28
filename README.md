@@ -120,6 +120,9 @@ the part of your app that uses SeeOnWall.
 | `open(params)` | Opens the preview for one poster. |
 | `close()` | Closes the preview. |
 | `setLanguage(lang)` | Changes language at runtime. Only needed if your language switcher does not update `<html lang>`. |
+| `isSessionReady()` | Returns the cached readiness hint for the current shop session. It is for optional catalogue UI, never authorization. |
+| `refreshSessionState()` | Refreshes the safe session hint and resolves to `none`, `creating`, `ready`, or `expired`. |
+| `on('session-change', listener)` | Reacts to session changes in this or another same-origin shop tab. Returns an unsubscribe function. |
 | `destroy()` | Stops the widget and removes everything it added. |
 | `snippetVersion()` | The loaded widget version, or `null`. Useful in bug reports. |
 
@@ -140,6 +143,20 @@ From `seeonwall/react`:
 | `embedUrl` | optional | A different visualizer origin. Only if you proxy the embed. |
 
 TypeScript types ship with the package. `PosterParams` and `SizeUnit` are exported.
+
+### Storefront readiness
+
+Use readiness only to decide whether to show optional catalogue-comparison controls. It is a cache hint; every protected SeeOnWall action still validates the session on the server.
+
+```ts
+import { isSessionReady, refreshSessionState, on } from 'seeonwall'
+
+await refreshSessionState()
+if (isSessionReady()) showCatalogueComparison()
+
+const unsubscribe = on('session-change', updateCatalogueControls)
+// Call unsubscribe() when the page or component is disposed.
+```
 
 ## Notes
 

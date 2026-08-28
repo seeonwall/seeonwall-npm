@@ -2,6 +2,9 @@ import type { PosterParams, SizeUnit } from './types.js'
 
 export type { PosterParams, SizeUnit }
 
+/** The safe storefront state returned by the readiness refresh. */
+export type StorefrontSessionState = 'none' | 'creating' | 'ready' | 'expired'
+
 /**
  * The location of the snippet file.
  *
@@ -39,6 +42,9 @@ interface SnippetApi {
   open: (params: PosterParams) => void
   close: () => void
   setLanguage: (lang: string) => void
+  isSessionReady: () => boolean
+  refreshSessionState: () => Promise<StorefrontSessionState>
+  on: (event: 'session-change', listener: () => void) => () => void
   version: string
 }
 
@@ -125,7 +131,10 @@ function isRestartable(candidate: Partial<SnippetApi>): candidate is SnippetApi 
     typeof candidate.destroy === 'function' &&
     typeof candidate.open === 'function' &&
     typeof candidate.close === 'function' &&
-    typeof candidate.setLanguage === 'function'
+    typeof candidate.setLanguage === 'function' &&
+    typeof candidate.isSessionReady === 'function' &&
+    typeof candidate.refreshSessionState === 'function' &&
+    typeof candidate.on === 'function'
   )
 }
 
@@ -258,6 +267,38 @@ export function close(): void {
  */
 export function setLanguage(lang: string): void {
   withApi((loaded) => { loaded.setLanguage(lang) }, 'setLanguage')
+}
+
+/**
+ * Returns the snippet's cached readiness hint for the current storefront session.
+ * It is useful for optional catalogue UI and is never authorization.
+ */
+export function isSessionReady(): boolean {
+  return isBrowser() && api?.isSessionReady() === true
+}
+
+/** Refreshes the storefront-safe session state from the SeeOnWall API. */
+export function refreshSessionState(): Promise<StorefrontSessionState> {
+  if (!isBrowser()) return Promise.resolve('none')
+  if (api) return api.refreshSessionState()
+  if (loading) return loading.then(loaded => loaded.refreshSessionState())
+  return Promise.resolve('none')
+}
+
+/** Subscribes to same-origin storefront session changes and returns an unsubscribe function. */
+export function on(event: 'session-change', listener: () => void): () => void {
+  if (!isBrowser()) return () => undefined
+  let cancelled = false
+  let unsubscribe: (() => void) | undefined
+  const subscribe = (loaded: SnippetApi) => {
+    if (!cancelled) unsubscribe = loaded.on(event, listener)
+  }
+  if (api) subscribe(api)
+  else if (loading) void loading.then(subscribe).catch(() => undefined)
+  return () => {
+    cancelled = true
+    unsubscribe?.()
+  }
 }
 
 /**
