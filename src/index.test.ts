@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type { StorefrontSessionState } from './index.js'
+import type { CataloguePreviewLaunchResult, StorefrontSessionState } from './index.js'
 
 type Loader = typeof import('./index.js')
 
@@ -23,8 +23,18 @@ function makeSnippet() {
     isSessionReady: vi.fn(() => false),
     refreshSessionState: vi.fn(async (): Promise<StorefrontSessionState> => 'none'),
     on: vi.fn(() => vi.fn()),
+    openCataloguePreview: vi.fn(
+      async (): Promise<CataloguePreviewLaunchResult> => ({ opened: true }),
+    ),
     version: '9.9.9',
   }
+}
+
+/** A snippet from before catalogue preview. Every other member is present. */
+function makeSnippetWithoutCataloguePreview() {
+  const snippet: Partial<ReturnType<typeof makeSnippet>> = makeSnippet()
+  delete snippet.openCataloguePreview
+  return snippet as Omit<ReturnType<typeof makeSnippet>, 'openCataloguePreview'>
 }
 
 /**
@@ -260,7 +270,141 @@ describe('destroy() while load() is still in progress', () => {
   })
 })
 
+describe('openCataloguePreview()', () => {
+  it('gives the result of the snippet', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    const poster = { posterUrl: 'https://cdn.test/one.jpg', posterWidth: 50, posterHeight: 70 }
+    await expect(loader.openCataloguePreview(poster)).resolves.toEqual({ opened: true })
+    expect(snippet.openCataloguePreview).toHaveBeenCalledWith(poster)
+  })
+
+  it('passes a refusal of the snippet to the caller', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    ;(snippet.openCataloguePreview as ReturnType<typeof vi.fn>).mockResolvedValue({
+      opened: false,
+      reason: 'no-ready-session',
+    })
+
+    await expect(
+      loader.openCataloguePreview({ posterUrl: 'https://cdn.test/one.jpg' }),
+    ).resolves.toEqual({ opened: false, reason: 'no-ready-session' })
+  })
+
+  /**
+   * The loader gets the snippet from a location without a version. Thus a
+   * browser can hold an older copy after a deployment. That copy must give a
+   * reason and must not stop the widget.
+   */
+  it('gives "unsupported" when the snippet on the page is older', async () => {
+    interceptScriptLoad(makeSnippetWithoutCataloguePreview() as ReturnType<typeof makeSnippet>)
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    await expect(
+      loader.openCataloguePreview({ posterUrl: 'https://cdn.test/one.jpg' }),
+    ).resolves.toEqual({ opened: false, reason: 'unsupported' })
+  })
+
+  it('starts an older copy of the snippet as usual', async () => {
+    const old = makeSnippetWithoutCataloguePreview()
+    window.SeeOnWall = old as unknown as NonNullable<Window['SeeOnWall']>
+    const loader = await loadModule()
+
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    // The copy restarts. A missing catalogue preview must never make the loader
+    // treat the copy as one that it cannot use.
+    expect(old.destroy).toHaveBeenCalledTimes(1)
+    expect(old.init).toHaveBeenCalledTimes(1)
+  })
+
+  it('waits for a load that is in progress', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+
+    const loaded = loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+    const result = loader.openCataloguePreview({ posterUrl: 'https://cdn.test/one.jpg' })
+    await loaded
+
+    await expect(result).resolves.toEqual({ opened: true })
+    expect(snippet.openCataloguePreview).toHaveBeenCalledTimes(1)
+  })
+
+  it('warns and gives "unsupported" before load()', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const loader = await loadModule()
+
+    await expect(
+      loader.openCataloguePreview({ posterUrl: 'https://cdn.test/one.jpg' }),
+    ).resolves.toEqual({ opened: false, reason: 'unsupported' })
+    expect(warn).toHaveBeenCalled()
+  })
+})
+
+describe('whenLoaded()', () => {
+  it('waits for a load that starts after the wait', async () => {
+    interceptScriptLoad()
+    const loader = await loadModule()
+
+    let done = false
+    const waiting = loader.whenLoaded().then(() => { done = true })
+
+    // Nothing has asked for the widget yet. The wait must not complete early.
+    await Promise.resolve()
+    expect(done).toBe(false)
+
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+    await waiting
+    expect(done).toBe(true)
+  })
+
+  it('completes at once when the widget is already there', async () => {
+    interceptScriptLoad()
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    await expect(loader.whenLoaded()).resolves.toBeUndefined()
+  })
+})
+
 describe('storefront readiness API', () => {
+  /**
+   * A subscription can start before load(). React runs the effect of a child
+   * before the effect of its parent, thus this is the usual order and not an
+   * edge case. The earlier form subscribed to nothing and stayed silent.
+   */
+  it('subscribes to a widget that arrives after the subscription', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+
+    const listener = vi.fn()
+    const unsubscribe = loader.on('session-change', listener)
+    expect(snippet.on).not.toHaveBeenCalled()
+
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+    await Promise.resolve()
+
+    expect(snippet.on).toHaveBeenCalledWith('session-change', listener)
+    unsubscribe()
+  })
+
+  it('does not subscribe when the caller gave up before the widget arrived', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+
+    loader.on('session-change', vi.fn())()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+    await Promise.resolve()
+
+    expect(snippet.on).not.toHaveBeenCalled()
+  })
+
   it('proxies readiness reads and subscriptions after loading the snippet', async () => {
     const { snippet } = interceptScriptLoad()
     const loader = await loadModule()

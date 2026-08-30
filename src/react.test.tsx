@@ -41,6 +41,26 @@ function interceptScriptLoad(snippet = makeSnippet()) {
   return { snippet, scripts }
 }
 
+/** A snippet that also has the storefront-session part of the interface. */
+function makeSessionSnippet(ready = true) {
+  const listeners: (() => void)[] = []
+  return {
+    ...makeSnippet(),
+    isSessionReady: vi.fn(() => ready),
+    refreshSessionState: vi.fn(async () => (ready ? 'ready' : 'none')),
+    on: vi.fn((_event: string, listener: () => void) => {
+      listeners.push(listener)
+      return () => {
+        const at = listeners.indexOf(listener)
+        if (at >= 0) listeners.splice(at, 1)
+      }
+    }),
+    /** Raises the event the snippet raises when storage changes. */
+    emit: () => { for (const listener of [...listeners]) listener() },
+    setReady: (value: boolean) => { ready = value },
+  }
+}
+
 async function loadModule(): Promise<ReactApi> {
   vi.resetModules()
   return await import('./react.js')
@@ -244,5 +264,65 @@ describe('SeeOnWallButton', () => {
     expect(mount?.getAttribute('data-button-class')).toBe('btn btn-secondary')
     expect(mount?.getAttribute('data-match-button')).toBe('.add-to-cart')
     expect(mount?.getAttribute('data-match-colors')).toBe('true')
+  })
+})
+
+describe('useSessionReady()', () => {
+  /**
+   * The snippet raises no event when it starts. Thus a session that was already
+   * in storage is only visible once the widget arrives, and the hook has to read
+   * the value again at that moment.
+   */
+  it('becomes true when the widget arrives with a session already stored', async () => {
+    const snippet = makeSessionSnippet(true)
+    interceptScriptLoad(snippet as unknown as ReturnType<typeof makeSnippet>)
+    const { useSeeOnWall, useSessionReady } = await loadModule()
+
+    const seen: boolean[] = []
+    function Probe() {
+      useSeeOnWall({ shopId: 'shop-1', scriptUrl: 'https://example.test/seeonwall.js' })
+      seen.push(useSessionReady())
+      return null
+    }
+
+    render(<Probe />)
+    expect(seen[0]).toBe(false)
+
+    await settle()
+    expect(seen[seen.length - 1]).toBe(true)
+  })
+
+  it('follows a session change', async () => {
+    const snippet = makeSessionSnippet(false)
+    interceptScriptLoad(snippet as unknown as ReturnType<typeof makeSnippet>)
+    const { useSeeOnWall, useSessionReady } = await loadModule()
+
+    const seen: boolean[] = []
+    function Probe() {
+      useSeeOnWall({ shopId: 'shop-1', scriptUrl: 'https://example.test/seeonwall.js' })
+      seen.push(useSessionReady())
+      return null
+    }
+
+    render(<Probe />)
+    await settle()
+    expect(seen[seen.length - 1]).toBe(false)
+
+    snippet.setReady(true)
+    await act(async () => { snippet.emit() })
+    expect(seen[seen.length - 1]).toBe(true)
+  })
+
+  it('is false and does not fail without a widget', async () => {
+    const { useSessionReady } = await loadModule()
+
+    const seen: boolean[] = []
+    function Probe() {
+      seen.push(useSessionReady())
+      return null
+    }
+
+    render(<Probe />)
+    expect(seen[0]).toBe(false)
   })
 })

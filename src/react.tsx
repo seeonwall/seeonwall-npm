@@ -1,6 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { load, destroy } from './index.js'
+import { load, destroy, isSessionReady, on, whenLoaded } from './index.js'
 import type { LoadOptions, PosterParams } from './index.js'
 
 export type { LoadOptions, PosterParams }
@@ -50,6 +50,40 @@ export function useSeeOnWall(options: LoadOptions): void {
     // Each option is a dependency. A change to one of them starts the widget
     // again with the new value.
   }, [shopId, embedUrl, lang, sizeUnit, scriptUrl])
+}
+
+/**
+ * Watches the widget for a session that is ready.
+ *
+ * The snippet does not report a change when it starts, thus a session that was
+ * already in storage becomes visible only when the widget arrives. The
+ * subscription below reads the value again at that moment.
+ */
+function subscribeToSession(onStoreChange: () => void): () => void {
+  let cancelled = false
+  const unsubscribe = on('session-change', onStoreChange)
+  void whenLoaded().then(() => {
+    if (!cancelled) onStoreChange()
+  })
+  return () => {
+    cancelled = true
+    unsubscribe()
+  }
+}
+
+/**
+ * Returns true while the shopper has a wall that is ready for this shop.
+ *
+ * Use the value to show or hide an optional control, for example a button that
+ * calls `openCataloguePreview` from the main entry. The value is a hint of the
+ * browser. It is never authorization: the server examines the session again on
+ * each action.
+ *
+ * The value is false on the server and on the first paint. It becomes true
+ * after the widget loads, thus your markup is the same on both sides.
+ */
+export function useSessionReady(): boolean {
+  return useSyncExternalStore(subscribeToSession, isSessionReady, () => false)
 }
 
 /** The appearance settings that a merchant can set for one button. */

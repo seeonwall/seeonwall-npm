@@ -6,6 +6,33 @@ export type { PosterParams, SizeUnit }
 export type StorefrontSessionState = 'none' | 'creating' | 'ready' | 'expired'
 
 /**
+ * Why a fast wall preview did not open.
+ *
+ * The snippet gives all of these values but the last one. The package adds
+ * `unsupported`. The package gets the snippet at runtime, thus the copy on the
+ * page can be older than the package and can have no fast wall preview. Refer
+ * to ADR 172.
+ */
+export type CataloguePreviewLaunchResult =
+  | { opened: true }
+  | {
+      opened: false
+      reason:
+        | 'no-ready-session'
+        | 'session-expired'
+        | 'inactive-product'
+        | 'invalid-poster-data'
+        | 'poster-unavailable'
+        | 'not-entitled'
+        | 'disabled'
+        | 'rate-limited'
+        | 'network-error'
+        | 'unsupported'
+    }
+
+const UNSUPPORTED: CataloguePreviewLaunchResult = { opened: false, reason: 'unsupported' }
+
+/**
  * The location of the snippet file.
  *
  * The package gets this file at runtime. The package does not contain the file.
@@ -45,6 +72,12 @@ interface SnippetApi {
   isSessionReady: () => boolean
   refreshSessionState: () => Promise<StorefrontSessionState>
   on: (event: 'session-change', listener: () => void) => () => void
+  /**
+   * Optional on purpose. A snippet that is older than this function does not
+   * have it, and {@link isRestartable} must not refuse such a copy. The refusal
+   * would stop the widget for a merchant who does not use fast wall preview.
+   */
+  openCataloguePreview?: (params: PosterParams) => Promise<CataloguePreviewLaunchResult>
   version: string
 }
 
@@ -64,6 +97,26 @@ declare global {
 
 let loading: Promise<SnippetApi> | null = null
 let api: SnippetApi | null = null
+
+/**
+ * One promise for every caller that waits for the widget.
+ *
+ * A wait can start before load() does. React runs the effect of a child before
+ * the effect of its parent, thus a component that watches the session usually
+ * starts before the component that loads the widget.
+ *
+ * All callers share one promise. A new promise for each caller would keep one
+ * more object for as long as no load occurs.
+ */
+let loadedPromise: Promise<void> | null = null
+let resolveLoaded: (() => void) | null = null
+
+function announceLoaded(): void {
+  const resolve = resolveLoaded
+  loadedPromise = null
+  resolveLoaded = null
+  resolve?.()
+}
 
 /**
  * True when the caller wants the widget to run.
@@ -135,6 +188,8 @@ function isRestartable(candidate: Partial<SnippetApi>): candidate is SnippetApi 
     typeof candidate.isSessionReady === 'function' &&
     typeof candidate.refreshSessionState === 'function' &&
     typeof candidate.on === 'function'
+    // openCataloguePreview is absent from this list on purpose. Refer to the
+    // note on that member of the interface.
   )
 }
 
@@ -205,6 +260,7 @@ export function load(options: LoadOptions): Promise<void> {
     loading = start(options).then(
       (loaded) => {
         api = loaded
+        announceLoaded()
         // A call to destroy() can occur while the widget loads. The widget
         // starts itself when its script runs, thus the loader must stop it now.
         // Before this point there was no widget to stop.
@@ -270,8 +326,30 @@ export function setLanguage(lang: string): void {
 }
 
 /**
+ * Completes when the widget is available.
+ *
+ * The promise waits for a load that starts later. It does not complete early
+ * because no load is in progress yet. Thus the order of two React effects
+ * cannot make a caller miss the widget.
+ *
+ * The promise does not fail. A load that fails leaves the caller waiting for
+ * the next attempt. On the server the promise completes immediately.
+ */
+export function whenLoaded(): Promise<void> {
+  if (!isBrowser() || api) {
+    return Promise.resolve()
+  }
+  if (!loadedPromise) {
+    loadedPromise = new Promise<void>((resolve) => {
+      resolveLoaded = resolve
+    })
+  }
+  return loadedPromise
+}
+
+/**
  * Returns the snippet's cached readiness hint for the current storefront session.
- * It is useful for optional catalogue UI and is never authorization.
+ * It is useful for optional fast wall preview controls and is never authorization.
  */
 export function isSessionReady(): boolean {
   return isBrowser() && api?.isSessionReady() === true
@@ -290,15 +368,62 @@ export function on(event: 'session-change', listener: () => void): () => void {
   if (!isBrowser()) return () => undefined
   let cancelled = false
   let unsubscribe: (() => void) | undefined
-  const subscribe = (loaded: SnippetApi) => {
-    if (!cancelled) unsubscribe = loaded.on(event, listener)
+  const subscribe = () => {
+    if (!cancelled && api) unsubscribe = api.on(event, listener)
   }
-  if (api) subscribe(api)
-  else if (loading) void loading.then(subscribe).catch(() => undefined)
+  // Through whenLoaded(), and not through `loading`, because a subscription can
+  // start before load(). The earlier form did nothing at all in that case.
+  if (api) subscribe()
+  else void whenLoaded().then(subscribe)
   return () => {
     cancelled = true
     unsubscribe?.()
   }
+}
+
+/**
+ * Opens a read-only preview of one poster on the wall that the shopper prepared
+ * before. The function does not start the camera flow, thus it needs a session
+ * that is already ready.
+ *
+ * The function does not throw. It gives a reason instead. Show the reason, or
+ * hide your control when {@link isSessionReady} is false. A silent call looks
+ * like a button that does nothing.
+ *
+ * The shop must have a paid plan. Without one the call gives `not-entitled`.
+ * There is no separate switch for a storefront that loads this package: the
+ * call is itself the decision to offer the control. The Shopify and WooCommerce
+ * apps keep that choice in their own settings, and give `disabled` when a
+ * merchant turns it off there.
+ */
+export function openCataloguePreview(params: PosterParams): Promise<CataloguePreviewLaunchResult> {
+  if (!isBrowser()) {
+    return Promise.resolve(UNSUPPORTED)
+  }
+  if (api) {
+    return launchCataloguePreview(api, params)
+  }
+  if (loading) {
+    return loading.then(
+      (loaded) => launchCataloguePreview(loaded, params),
+      () => UNSUPPORTED,
+    )
+  }
+  console.warn(
+    '[seeonwall] You called openCataloguePreview() before load(). Call load({ shopId }) first.',
+  )
+  return Promise.resolve(UNSUPPORTED)
+}
+
+/** Calls the snippet, or reports that this copy of the snippet is too old. */
+function launchCataloguePreview(
+  loaded: SnippetApi,
+  params: PosterParams,
+): Promise<CataloguePreviewLaunchResult> {
+  if (typeof loaded.openCataloguePreview !== 'function') {
+    return Promise.resolve(UNSUPPORTED)
+  }
+  return loaded.openCataloguePreview(params)
 }
 
 /**
