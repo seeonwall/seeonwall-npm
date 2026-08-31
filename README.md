@@ -53,6 +53,7 @@ Everything in `PosterParams`, plus:
 | prop | | |
 |---|---|---|
 | `posterSizes` | `string[]` or `string` | An array is joined with commas for you. |
+| `sizesFrom` | `auto` or a selector | Reads the sizes from a size control on the page instead. |
 | `className`, `style` | | Applied to the mount element. |
 | `variant` | `solid` \| `outline` \| `glyph` \| `icon` | The shape of the button. Default `solid`. |
 | `fullWidth` | boolean | Stretches the button to the width of its container. |
@@ -68,7 +69,7 @@ they are. The two are independent, so any shape can carry your colours or your t
 
 | | |
 |---|---|
-| `solid` | A filled button with a label. The default, and what the button looked like before. |
+| `solid` | A filled button with a label. The default. |
 | `outline` | The same box with no fill. |
 | `glyph` | The mark and the label, with no box. Reads as a secondary action. |
 | `icon` | The mark alone, 40px square. It fits beside Add to cart rather than under it. |
@@ -76,6 +77,10 @@ they are. The two are independent, so any shape can carry your colours or your t
 ```tsx
 <SeeOnWallButton posterUrl={product.image} variant="glyph" />
 ```
+
+Every shape carries the SeeOnWall mark. A shape decides what is drawn around the mark, not
+whether it is there — `icon` is simply the shape with nothing else left. On the free plan the
+mark is the full logo; every paid plan gets the monochrome glyph.
 
 The three shapes with no fill take their colour from the text around them, so they suit a
 light or a dark theme with nothing to set. That also decides which colour props have
@@ -94,6 +99,32 @@ target a shopper cannot read.
 
 Under `icon` the label is still resolved and translated as usual. It becomes the button's
 accessible name and its tooltip, so a screen reader still announces it.
+
+### Sizes from a control on the page
+
+Some shops keep the print size in the size control the shopper uses — a dropdown or a set of
+radio buttons an add-on plugin renders — and not in the product record. `sizesFrom` reads the
+sizes from that control:
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} sizesFrom="auto" />
+<SeeOnWallButton posterUrl={product.image} sizesFrom="#size-field select" />
+```
+
+`auto` searches the form around the mount, then the product around it, and no wider, so a
+listing page cannot answer for one product with the control of the product beside it. It takes
+a `select`, or a group of radio buttons or checkboxes, whose option labels read as sizes:
+`60x40cm`, `Medium (50x70cm)`, `Small - 30x40cm` and `30x40cm +€10.00` all yield their size. A
+selector names one control and skips the search.
+
+The control wins against `posterSizes`, `posterWidth` and `posterHeight`, because it holds the
+size the shopper picked and those props were written before they picked one. A control showing
+no selection gives the list alone, and the preview opens on the smallest size in it. The widget
+re-reads the control on every click, so you register no listener and re-render nothing.
+
+Most storefronts built with this package know their sizes and should pass them in
+`posterSizes`. Reach for `sizesFrom` when the size control belongs to a plugin or to a part of
+the page you do not control.
 
 ## Vanilla JavaScript
 
@@ -119,7 +150,8 @@ Mounts added later are picked up automatically, so client-side navigation works
 without another call to `load()`.
 
 The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the mount, and
-`data-button-width="full"` stretches the button to its container.
+`data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
+selector in the same attribute, reads the sizes from a size control on the page.
 
 The full list of `data-*` attributes — sizes, frames, passe-partout, per-button
 language — is in the [integration docs](https://seeonwall.com/docs).

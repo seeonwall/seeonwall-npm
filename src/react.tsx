@@ -97,6 +97,10 @@ export function useSessionReady(): boolean {
  * - `outline` the same box with no fill.
  * - `glyph`   the mark and the label, with no box.
  * - `icon`    the mark alone.
+ *
+ * Each shape carries the mark. A shape says what is drawn around the mark. It does not say
+ * if the mark is there. `icon` is only the extreme of that: the shape with nothing else in
+ * it.
  */
 export type ButtonVariant = 'solid' | 'outline' | 'glyph' | 'icon'
 
@@ -169,6 +173,26 @@ export interface SeeOnWallButtonProps
    * The widget shows a size selector when there is more than one size.
    */
   posterSizes?: string[] | string
+  /**
+   * Reads the sizes from a size control on the page, and not from the props (ADR 185).
+   *
+   * Give `"auto"` to let the widget find the control, or give a CSS selector to name one.
+   * `"auto"` looks in the form around the mount, then in the product around the mount, and
+   * no wider. It accepts a `select`, or a group of radio buttons or checkboxes, whose option
+   * labels are sizes: `60x40cm`, `Medium (50x70cm)` and `Small - 30x40cm` all give a size.
+   *
+   * The control wins against {@link posterSizes}, {@link posterWidth} and
+   * {@link posterHeight}, because the control holds the size that the shopper selected and
+   * the props were written before the shopper selected one. A control that shows no
+   * selection gives the list only, and the preview opens with the smallest size in it.
+   *
+   * The widget reads the control again at each click, thus you do not add a listener.
+   *
+   * Most storefronts do not need this prop. You know your sizes, thus give them in
+   * {@link posterSizes}. Use this prop when a different part of the page, for example a
+   * plugin, draws the size control.
+   */
+  sizesFrom?: string
   /** Classes for the element that holds the button. */
   className?: string
   /** Styles for the element that holds the button. */
@@ -209,6 +233,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     posterWidth,
     posterHeight,
     posterSizes,
+    sizesFrom,
     posterInset,
     productPageUrl,
     lang,
@@ -239,6 +264,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     'data-poster-sizes',
     Array.isArray(posterSizes) ? posterSizes.join(',') : posterSizes,
   )
+  attr(attributes, 'data-sizes-from', sizesFrom)
   attr(attributes, 'data-poster-inset', posterInset)
   attr(attributes, 'data-product-page-url', productPageUrl)
   attr(attributes, 'data-lang', lang)

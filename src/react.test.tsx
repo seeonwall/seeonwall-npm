@@ -194,6 +194,32 @@ describe('SeeOnWallButton', () => {
     ).toBe('30x40,50x70')
   })
 
+  it('names the size control that the widget must read', async () => {
+    // A prop that reaches no attribute is a prop that does nothing. The shops that need this
+    // one have no size in their product record, thus a silent drop gives them no button.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" sizesFrom="auto" />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.getAttribute('data-sizes-from'),
+    ).toBe('auto')
+  })
+
+  it('passes a selector that names the size control', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" sizesFrom="#size-field select" />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.getAttribute('data-sizes-from'),
+    ).toBe('#size-field select')
+  })
+
   it('leaves out an attribute that you do not give', async () => {
     const { SeeOnWallButton } = await loadModule()
 
@@ -207,6 +233,8 @@ describe('SeeOnWallButton', () => {
     expect(mount?.hasAttribute('data-match-colors')).toBe(false)
     expect(mount?.hasAttribute('data-button-variant')).toBe(false)
     expect(mount?.hasAttribute('data-button-width')).toBe(false)
+    // An empty value is no request at all to the widget, thus the attribute must stay away.
+    expect(mount?.hasAttribute('data-sizes-from')).toBe(false)
   })
 
   it('passes the framing settings', async () => {

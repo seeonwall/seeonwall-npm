@@ -1,6 +1,6 @@
 {
   "name": "seeonwall",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "Show shoppers a poster on their own wall, at true scale. The seeonwall.com widget for React and headless storefronts.",
   "keywords": [
     "seeonwall",
