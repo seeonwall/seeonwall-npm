@@ -86,8 +86,48 @@ export function useSessionReady(): boolean {
   return useSyncExternalStore(subscribeToSession, isSessionReady, () => false)
 }
 
+/**
+ * The shape of the button.
+ *
+ * A shape says which parts of the button are painted. The colour settings say
+ * what colour they are. The two questions are independent: each shape can carry
+ * your own colours, or the colours of your theme.
+ *
+ * - `solid`   a filled button with a label. The default.
+ * - `outline` the same box with no fill.
+ * - `glyph`   the mark and the label, with no box.
+ * - `icon`    the mark alone.
+ */
+export type ButtonVariant = 'solid' | 'outline' | 'glyph' | 'icon'
+
 /** The appearance settings that a merchant can set for one button. */
 export interface SeeOnWallButtonStyleProps {
+  /**
+   * The shape of the button. The default is `"solid"`, which is the button that
+   * this package gave before the shapes came. Refer to {@link ButtonVariant}.
+   *
+   * The three shapes with no fill take the colour of the text around them. Thus
+   * they agree with a light theme and with a dark theme, and you set nothing.
+   *
+   * A colour that a shape does not paint does nothing. `backgroundColor`
+   * reaches `"solid"` only, and `borderColor` and `borderRadius` do not reach
+   * `"glyph"`. `textColor` reaches every shape: it paints the label, the mark,
+   * and the border of `"outline"` if you give no border colour.
+   *
+   * With `"icon"` the label stays. It becomes the accessible name of the button
+   * and the tooltip, thus the button keeps a name that a screen reader reads.
+   */
+  variant?: ButtonVariant
+  /**
+   * Stretches the button to the full width of the element that holds it. The
+   * default is the natural width of the button.
+   *
+   * The shape decides how far this setting goes. `"solid"`, `"outline"` and
+   * `"glyph"` become as wide as the element, and `"glyph"` puts its mark and
+   * its label in the middle. `"icon"` stays 40px square: a wide button with one
+   * mark in it is a target that the shopper cannot read.
+   */
+  fullWidth?: boolean
   /** The background colour of the button, for example `"#b5502a"`. */
   backgroundColor?: string
   /** The text colour of the button. */
@@ -104,9 +144,18 @@ export interface SeeOnWallButtonStyleProps {
   /**
    * A CSS selector for a button of your theme to copy. The widget copies the
    * shape and the typography of that button. It does not copy the colours.
+   *
+   * The shapes with no box, `"glyph"` and `"icon"`, do not copy a button. There
+   * is no box to copy, and they take the font of the page.
    */
   matchButton?: string
-  /** Copies the colours of the button named in `matchButton` as well. */
+  /**
+   * Copies the colours of the button named in `matchButton` as well.
+   *
+   * The shapes with no fill do not copy the colours. A colour that was selected
+   * against a fill, for example white on a black button, disappears on the
+   * background of the page.
+   */
   matchColors?: boolean
 }
 
@@ -166,6 +215,8 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     frameDefaultCm,
     frameDefaultColor,
     framePreset,
+    variant,
+    fullWidth,
     backgroundColor,
     textColor,
     borderRadius,
@@ -194,6 +245,16 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-frame-default-cm', frameDefaultCm)
   attr(attributes, 'data-frame-default-color', frameDefaultColor)
   attr(attributes, 'data-frame-preset', framePreset)
+  // A mount with no attribute is a solid button to the widget. Thus the default
+  // shape writes nothing, and the markup stays as it was before the shapes came.
+  if (variant !== undefined && variant !== 'solid') {
+    attributes['data-button-variant'] = variant
+  }
+  // The widget reads the value "full" and no other value. Thus the attribute is
+  // absent for a button of the natural width, as it is for the default shape.
+  if (fullWidth === true) {
+    attributes['data-button-width'] = 'full'
+  }
   attr(attributes, 'data-bg-color', backgroundColor)
   attr(attributes, 'data-text-color', textColor)
   attr(attributes, 'data-border-radius', borderRadius)

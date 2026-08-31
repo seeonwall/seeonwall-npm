@@ -205,6 +205,8 @@ describe('SeeOnWallButton', () => {
     expect(mount?.hasAttribute('data-poster-title')).toBe(false)
     expect(mount?.hasAttribute('data-lang')).toBe(false)
     expect(mount?.hasAttribute('data-match-colors')).toBe(false)
+    expect(mount?.hasAttribute('data-button-variant')).toBe(false)
+    expect(mount?.hasAttribute('data-button-width')).toBe(false)
   })
 
   it('passes the framing settings', async () => {
@@ -234,6 +236,78 @@ describe('SeeOnWallButton', () => {
     const { container } = render(<SeeOnWallButton posterUrl="https://shop.example/p.jpg" />)
 
     expect(container.querySelector('.seeonwall-button')?.hasAttribute('data-frame-preset')).toBe(false)
+  })
+
+  it('passes the shape of the button', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" variant="glyph" />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.getAttribute('data-button-variant'),
+    ).toBe('glyph')
+  })
+
+  it('writes no attribute for the shape that is the default', async () => {
+    // The widget reads a mount with no attribute as a solid button. An attribute that
+    // says the same thing is one more thing to read in the markup, thus it stays away.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" variant="solid" />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.hasAttribute('data-button-variant'),
+    ).toBe(false)
+  })
+
+  it('keeps the colours that you give next to a shape that paints few of them', async () => {
+    // The widget decides which colours a shape can use. The component gives every
+    // colour that it gets, thus a change of shape does not delete a setting.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton
+        posterUrl="https://shop.example/p.jpg"
+        variant="outline"
+        backgroundColor="#b5502a"
+        textColor="#101010"
+      />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    expect(mount?.getAttribute('data-button-variant')).toBe('outline')
+    expect(mount?.getAttribute('data-bg-color')).toBe('#b5502a')
+    expect(mount?.getAttribute('data-text-color')).toBe('#101010')
+  })
+
+  it('stretches the button when you ask for the full width', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" fullWidth />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.getAttribute('data-button-width'),
+    ).toBe('full')
+  })
+
+  it('writes no width attribute for a button of the natural width', async () => {
+    // The widget reads "full" and no other value, thus false must remove the attribute
+    // and not write a word that the widget ignores.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" fullWidth={false} />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.hasAttribute('data-button-width'),
+    ).toBe(false)
   })
 
   it('keeps your own class next to the class of the widget', async () => {

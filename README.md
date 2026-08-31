@@ -54,10 +54,46 @@ Everything in `PosterParams`, plus:
 |---|---|---|
 | `posterSizes` | `string[]` or `string` | An array is joined with commas for you. |
 | `className`, `style` | | Applied to the mount element. |
+| `variant` | `solid` \| `outline` \| `glyph` \| `icon` | The shape of the button. Default `solid`. |
+| `fullWidth` | boolean | Stretches the button to the width of its container. |
 | `backgroundColor`, `textColor`, `borderRadius`, `borderColor` | | Button appearance. |
 | `buttonClassName` | | Your theme's classes, added after the widget's own. |
 | `matchButton` | selector | Copies shape and typography from one of your own buttons. |
 | `matchColors` | boolean | Also copies its colours. |
+
+### Button shapes
+
+`variant` says which parts of the button are painted; the colour props say what colour
+they are. The two are independent, so any shape can carry your colours or your theme's.
+
+| | |
+|---|---|
+| `solid` | A filled button with a label. The default, and what the button looked like before. |
+| `outline` | The same box with no fill. |
+| `glyph` | The mark and the label, with no box. Reads as a secondary action. |
+| `icon` | The mark alone, 40px square. It fits beside Add to cart rather than under it. |
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} variant="glyph" />
+```
+
+The three shapes with no fill take their colour from the text around them, so they suit a
+light or a dark theme with nothing to set. That also decides which colour props have
+somewhere to land: `backgroundColor` reaches `solid` alone, and `borderColor` and
+`borderRadius` do not reach `glyph`. `textColor` reaches every shape — it paints the label,
+the mark, and the `outline` border when `borderColor` is absent. Passing a colour a shape
+cannot use is harmless; it applies again as soon as you change back to a shape that can.
+
+`glyph` and `icon` ignore `matchButton`: they draw no box to match, and they take the host
+page's own font. `outline` still matches shape and typography, but not colours — a colour
+picked against a filled Add to cart disappears on your page background.
+
+`fullWidth` stretches `solid`, `outline` and `glyph` to the width of the element that holds
+them. `icon` stays 40px square whatever you pass — a wide button with one mark in it is a
+target a shopper cannot read.
+
+Under `icon` the label is still resolved and translated as usual. It becomes the button's
+accessible name and its tooltip, so a screen reader still announces it.
 
 ## Vanilla JavaScript
 
@@ -81,6 +117,9 @@ Then mark any element on the page as a button mount, and the widget puts a
 
 Mounts added later are picked up automatically, so client-side navigation works
 without another call to `load()`.
+
+The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the mount, and
+`data-button-width="full"` stretches the button to its container.
 
 The full list of `data-*` attributes — sizes, frames, passe-partout, per-button
 language — is in the [integration docs](https://seeonwall.com/docs).
