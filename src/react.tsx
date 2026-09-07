@@ -1,9 +1,10 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
-import { load, destroy, isSessionReady, on, whenLoaded } from './index.js'
-import type { LoadOptions, PosterParams } from './index.js'
+import { load, destroy, isSessionReady, on, whenLoaded, BUTTON_TEXT_LANGS } from './index.js'
+import type { ButtonTextLang, LoadOptions, PosterParams } from './index.js'
 
-export type { LoadOptions, PosterParams }
+export { BUTTON_TEXT_LANGS }
+export type { ButtonTextLang, LoadOptions, PosterParams }
 
 /**
  * The number of components that use the widget at this moment.
@@ -98,9 +99,13 @@ export function useSessionReady(): boolean {
  * - `glyph`   the mark and the label, with no box.
  * - `icon`    the mark alone.
  *
- * Each shape carries the mark. A shape says what is drawn around the mark. It does not say
- * if the mark is there. `icon` is only the extreme of that: the shape with nothing else in
- * it.
+ * Each shape carries the same mark. A shape says what is drawn around the mark. It does not
+ * say if the mark is there. `icon` is only the extreme of that: the shape with nothing else
+ * in it.
+ *
+ * On the free plan the mark is drawn in the brand colour, and not in the colour of the label
+ * beside it. That is the full extent of the branding, and it is visible on the shapes that
+ * carry no fill of ours.
  */
 export type ButtonVariant = 'solid' | 'outline' | 'glyph' | 'icon'
 
@@ -147,12 +152,36 @@ export interface SeeOnWallButtonStyleProps {
   buttonClassName?: string
   /**
    * A CSS selector for a button of your theme to copy. The widget copies the
-   * shape and the typography of that button. It does not copy the colours.
+   * shape, the size and the typography of that button. It does not copy the
+   * colours.
+   *
+   * The width comes with the size. A theme button that is as wide as its own
+   * label gives a floor in pixels, because your label is a different string and
+   * can need more room. A theme button that fills its row gives the full width
+   * of the row, thus the two buttons stay together at every width of the page.
    *
    * The shapes with no box, `"glyph"` and `"icon"`, do not copy a button. There
    * is no box to copy, and they take the font of the page.
    */
   matchButton?: string
+  /**
+   * Your own label for the button, in place of the label of the widget.
+   *
+   * Give one string to use the same label in every language. Give an object to
+   * write a label for each language, for example
+   * `{ en: 'Preview on my wall', de: 'An meiner Wand ansehen' }`. A language
+   * that the object does not name keeps the label of the widget, thus you name
+   * only the languages that you want to change.
+   *
+   * The keys are the languages of {@link BUTTON_TEXT_LANGS}. A shopper whose
+   * language is not one of them reads the English label, and the English label
+   * of this object if you give one.
+   *
+   * Under the `"icon"` shape the label is still the accessible name and the
+   * tooltip of the button. Thus this value reaches a screen reader even where
+   * the button shows no text.
+   */
+  buttonText?: string | Partial<Record<ButtonTextLang, string>>
   /**
    * Copies the colours of the button named in `matchButton` as well.
    *
@@ -247,6 +276,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     borderRadius,
     borderColor,
     buttonClassName,
+    buttonText,
     matchButton,
     matchColors,
     className,
@@ -286,6 +316,18 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-border-radius', borderRadius)
   attr(attributes, 'data-border-color', borderColor)
   attr(attributes, 'data-button-class', buttonClassName)
+  // One attribute for each language, because the widget reads the attribute of
+  // the language of the shopper and of no other language. A single string is
+  // therefore the same string in every one of them.
+  if (typeof buttonText === 'string') {
+    for (const lang of BUTTON_TEXT_LANGS) {
+      attr(attributes, `data-button-text-${lang}`, buttonText)
+    }
+  } else if (buttonText) {
+    for (const [lang, text] of Object.entries(buttonText)) {
+      attr(attributes, `data-button-text-${lang}`, text)
+    }
+  }
   attr(attributes, 'data-match-button', matchButton)
   if (matchColors === true) {
     attributes['data-match-colors'] = 'true'

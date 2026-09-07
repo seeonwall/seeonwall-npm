@@ -338,6 +338,50 @@ describe('SeeOnWallButton', () => {
     ).toBe(false)
   })
 
+  it('writes one label for every language when you give one string', async () => {
+    // The widget reads the attribute of the shopper's language only. One attribute would
+    // therefore give the label to one language and the default to every other one.
+    const { SeeOnWallButton, BUTTON_TEXT_LANGS } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" buttonText="Preview on my wall" />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    for (const lang of BUTTON_TEXT_LANGS) {
+      expect(mount?.getAttribute(`data-button-text-${lang}`)).toBe('Preview on my wall')
+    }
+  })
+
+  it('writes a label for each language that you name, and no other', async () => {
+    // A language you leave out keeps the label of the widget. Thus a shop that translates
+    // two of its languages does not lose the seven that the widget already translates.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton
+        posterUrl="https://shop.example/p.jpg"
+        buttonText={{ en: 'Preview on my wall', de: 'An meiner Wand ansehen' }}
+      />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    expect(mount?.getAttribute('data-button-text-en')).toBe('Preview on my wall')
+    expect(mount?.getAttribute('data-button-text-de')).toBe('An meiner Wand ansehen')
+    expect(mount?.hasAttribute('data-button-text-pl')).toBe(false)
+  })
+
+  it('writes no label attribute when you give no label', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(<SeeOnWallButton posterUrl="https://shop.example/p.jpg" />)
+
+    expect(
+      container.querySelector('.seeonwall-button')?.getAttributeNames()
+        .filter((name) => name.startsWith('data-button-text-')),
+    ).toHaveLength(0)
+  })
+
   it('keeps your own class next to the class of the widget', async () => {
     const { SeeOnWallButton } = await loadModule()
 

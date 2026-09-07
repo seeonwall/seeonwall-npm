@@ -1,7 +1,8 @@
 /**
- * The poster contract. This file is a copy of the definition in the snippet.
- * The source files are `integration-snippet/src/config.ts` and
- * `integration-snippet/src/sizeParser.ts`.
+ * The poster contract, and the languages that a button label can carry. This
+ * file is a copy of the definitions in the snippet. The source files are
+ * `integration-snippet/src/config.ts`, `integration-snippet/src/sizeParser.ts`
+ * and `integration-snippet/src/i18n.ts`.
  *
  * The package repeats these types. It does not import them. This package has
  * its own public repository, because npm provenance must attest to it. The
@@ -12,8 +13,10 @@
  * cannot prevent one. Thus you must change the source file first. Then copy the
  * new text to this file. Do not do this in the opposite order.
  *
- * The text below the next line is an exact copy. Do not edit the wording, or
- * the check fails.
+ * The check compares three declarations: `SizeUnit`, `PosterParams` and
+ * `BUTTON_TEXT_LANGS`. Each of them is an exact copy. Do not edit the wording
+ * inside them, or the check fails. The comments above them are the comments of
+ * this package, and the check does not read them.
  */
 
 export type SizeUnit = 'cm' | 'in'
@@ -116,3 +119,16 @@ export interface PosterParams {
    */
   framePreset?: string
 }
+
+/**
+ * The languages that a button can carry a label of your own in.
+ *
+ * The widget has a label for each of these languages, and a shop can replace
+ * the label of any of them. Refer to `buttonText` in the React layer. A
+ * language that is not in this list gets the English label, and the English
+ * replacement if you give one.
+ */
+export const BUTTON_TEXT_LANGS = ['en', 'pl', 'de', 'es', 'fr', 'it', 'pt', 'nl', 'sv', 'nb'] as const
+
+/** One language of {@link BUTTON_TEXT_LANGS}. */
+export type ButtonTextLang = (typeof BUTTON_TEXT_LANGS)[number]

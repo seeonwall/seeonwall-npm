@@ -1,6 +1,7 @@
 import type { PosterParams, SizeUnit } from './types.js'
 
-export type { PosterParams, SizeUnit }
+export { BUTTON_TEXT_LANGS } from './types.js'
+export type { PosterParams, SizeUnit, ButtonTextLang } from './types.js'
 
 /** The safe storefront state returned by the readiness refresh. */
 export type StorefrontSessionState = 'none' | 'creating' | 'ready' | 'expired'

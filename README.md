@@ -59,7 +59,8 @@ Everything in `PosterParams`, plus:
 | `fullWidth` | boolean | Stretches the button to the width of its container. |
 | `backgroundColor`, `textColor`, `borderRadius`, `borderColor` | | Button appearance. |
 | `buttonClassName` | | Your theme's classes, added after the widget's own. |
-| `matchButton` | selector | Copies shape and typography from one of your own buttons. |
+| `buttonText` | string or object | Your own label, for one language or for each. |
+| `matchButton` | selector | Copies shape, size and typography from one of your own buttons. |
 | `matchColors` | boolean | Also copies its colours. |
 
 ### Button shapes
@@ -78,9 +79,10 @@ they are. The two are independent, so any shape can carry your colours or your t
 <SeeOnWallButton posterUrl={product.image} variant="glyph" />
 ```
 
-Every shape carries the SeeOnWall mark. A shape decides what is drawn around the mark, not
-whether it is there — `icon` is simply the shape with nothing else left. On the free plan the
-mark is the full logo; every paid plan gets the monochrome glyph.
+Every shape carries the same SeeOnWall mark. A shape decides what is drawn around the mark,
+not whether it is there — `icon` is simply the shape with nothing else left. On the free plan
+the mark is drawn in the brand orange rather than the colour of the label beside it; that is
+the whole of the free-plan branding, and it shows on the shapes with no fill of their own.
 
 The three shapes with no fill take their colour from the text around them, so they suit a
 light or a dark theme with nothing to set. That also decides which colour props have
@@ -90,8 +92,12 @@ the mark, and the `outline` border when `borderColor` is absent. Passing a colou
 cannot use is harmless; it applies again as soon as you change back to a shape that can.
 
 `glyph` and `icon` ignore `matchButton`: they draw no box to match, and they take the host
-page's own font. `outline` still matches shape and typography, but not colours — a colour
-picked against a filled Add to cart disappears on your page background.
+page's own font. `outline` still matches shape, size and typography, but not colours — a
+colour picked against a filled Add to cart disappears on your page background.
+
+A matched button also takes the width of the button it copies: a pixel floor when your theme
+sizes that button to its own content, so a longer label still fits, and the full width of the
+row when your theme stretches it, so the pair stays side by side at every breakpoint.
 
 `fullWidth` stretches `solid`, `outline` and `glyph` to the width of the element that holds
 them. `icon` stays 40px square whatever you pass — a wide button with one mark in it is a
@@ -99,6 +105,29 @@ target a shopper cannot read.
 
 Under `icon` the label is still resolved and translated as usual. It becomes the button's
 accessible name and its tooltip, so a screen reader still announces it.
+
+### The label
+
+The widget labels the button itself, in each of the ten languages it knows, and follows
+`<html lang>` at runtime. Pass `buttonText` when your own wording should win:
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} buttonText="Preview on my wall" />
+
+<SeeOnWallButton
+  posterUrl={product.image}
+  buttonText={{ en: 'Preview on my wall', de: 'An meiner Wand ansehen' }}
+/>
+```
+
+A string is used in every language. An object replaces the label of the languages it names
+and leaves the rest translated, so a shop that has wording for two of its languages keeps the
+widget's wording for the others. The keys are the languages in `BUTTON_TEXT_LANGS`, exported
+from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`. A shopper on any
+other language reads the English label, and your English override if you set one.
+
+Under `icon` the label is still resolved and translated — it becomes the accessible name and
+the tooltip — so this prop reaches a screen reader on a button that shows no text.
 
 ### Sizes from a control on the page
 
@@ -152,6 +181,9 @@ without another call to `load()`.
 The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the mount, and
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
+
+`data-button-text-en`, and the same attribute for any other language of `BUTTON_TEXT_LANGS`,
+replaces the label the widget would write.
 
 The full list of `data-*` attributes — sizes, frames, passe-partout, per-button
 language — is in the [integration docs](https://seeonwall.com/docs).
