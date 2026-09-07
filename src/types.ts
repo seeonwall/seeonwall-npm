@@ -128,7 +128,7 @@ export interface PosterParams {
  * language that is not in this list gets the English label, and the English
  * replacement if you give one.
  */
-export const BUTTON_TEXT_LANGS = ['en', 'pl', 'de', 'es', 'fr', 'it', 'pt', 'nl', 'sv', 'nb'] as const
+export const BUTTON_TEXT_LANGS = ['en', 'pl', 'de', 'es', 'fr', 'it', 'pt', 'nl', 'sv', 'nb', 'da'] as const
 
 /** One language of {@link BUTTON_TEXT_LANGS}. */
 export type ButtonTextLang = (typeof BUTTON_TEXT_LANGS)[number]
