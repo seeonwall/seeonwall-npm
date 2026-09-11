@@ -347,6 +347,47 @@ describe('openCataloguePreview()', () => {
   })
 })
 
+/**
+ * The event is a native one on the window. The wrapper must not go through the widget: a copy
+ * of the widget that is older than ADR 235 answers an event name it does not know with a
+ * subscription that never runs, and the merchant sees a listener that is silent.
+ */
+describe("on('purchase-request')", () => {
+  it('hears the event with no widget loaded at all', async () => {
+    const loader = await loadModule()
+
+    const listener = vi.fn()
+    const unsubscribe = loader.on('purchase-request', listener)
+    window.dispatchEvent(new CustomEvent('seeonwall:purchase-request', { detail: { selectionKey: 'v1' } }))
+
+    expect(listener).toHaveBeenCalledTimes(1)
+    const received = listener.mock.calls[0]?.[0] as CustomEvent
+    expect(received.detail.selectionKey).toBe('v1')
+    unsubscribe()
+  })
+
+  it('stops hearing the event after the caller unsubscribes', async () => {
+    const loader = await loadModule()
+
+    const listener = vi.fn()
+    loader.on('purchase-request', listener)()
+    window.dispatchEvent(new CustomEvent('seeonwall:purchase-request', { detail: {} }))
+
+    expect(listener).not.toHaveBeenCalled()
+  })
+
+  it('does not ask the widget for this event', async () => {
+    const { snippet } = interceptScriptLoad()
+    const loader = await loadModule()
+    await loader.load({ shopId: 'shop-1', scriptUrl: SCRIPT_URL })
+
+    const unsubscribe = loader.on('purchase-request', vi.fn())
+
+    expect(snippet.on).not.toHaveBeenCalled()
+    unsubscribe()
+  })
+})
+
 describe('whenLoaded()', () => {
   it('waits for a load that starts after the wait', async () => {
     interceptScriptLoad()

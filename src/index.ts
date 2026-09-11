@@ -1,7 +1,7 @@
 import type { PosterParams, SizeUnit } from './types.js'
 
 export { BUTTON_TEXT_LANGS } from './types.js'
-export type { PosterParams, SizeUnit, ButtonTextLang } from './types.js'
+export type { PosterParams, PosterOffer, SizeUnit, ButtonTextLang } from './types.js'
 
 /** The safe storefront state returned by the readiness refresh. */
 export type StorefrontSessionState = 'none' | 'creating' | 'ready' | 'expired'
@@ -30,6 +30,42 @@ export type CataloguePreviewLaunchResult =
         | 'network-error'
         | 'unsupported'
     }
+
+/**
+ * The `detail` of the `seeonwall:purchase-request` event (ADR 235).
+ *
+ * The widget gives this object to your listener when the shopper presses "Add to cart" in a
+ * desktop preview. The offer is the one the widget matched from {@link PosterParams.offers}.
+ */
+export interface PurchaseRequestDetail {
+  /** The `key` of the matched offer. Your own value; the widget does not read it. */
+  selectionKey: string
+  posterUrl: string
+  widthCm: number
+  heightCm: number
+  /** The frame preset of the offer, or null for a print with no frame. */
+  framePreset: string | null
+  /** The product page of the mount, if it has one. */
+  productPageUrl: string | null
+  /**
+   * Where to go if your own add fails. It is the product page and never the purchase URL,
+   * because a request that failed in an unknown way can have added the item already.
+   */
+  fallbackUrl: string | null
+  /**
+   * Goes to {@link fallbackUrl}, or closes the preview if there is none.
+   *
+   * The function acts one time, and only while this preview is still the one on screen. Thus a
+   * late answer cannot take the shopper away from a preview they opened after.
+   */
+  navigateFallback(): void
+}
+
+/** A listener for the `purchase-request` event. */
+export type PurchaseRequestListener = (event: CustomEvent<PurchaseRequestDetail>) => void
+
+/** The name of the native event. The widget sends it on `window`. */
+const PURCHASE_REQUEST_EVENT = 'seeonwall:purchase-request'
 
 const UNSUPPORTED: CataloguePreviewLaunchResult = { opened: false, reason: 'unsupported' }
 
@@ -364,13 +400,35 @@ export function refreshSessionState(): Promise<StorefrontSessionState> {
   return Promise.resolve('none')
 }
 
-/** Subscribes to same-origin storefront session changes and returns an unsubscribe function. */
-export function on(event: 'session-change', listener: () => void): () => void {
+/**
+ * Subscribes to a widget event and returns the function that unsubscribes.
+ *
+ * - `session-change`: the storefront session changed, in this tab or in another tab of the
+ *   same origin.
+ * - `purchase-request`: the shopper pressed "Add to cart" in a desktop preview (ADR 235). Refer
+ *   to {@link PurchaseRequestDetail}.
+ */
+export function on(event: 'session-change', listener: () => void): () => void
+export function on(event: 'purchase-request', listener: PurchaseRequestListener): () => void
+export function on(
+  event: 'session-change' | 'purchase-request',
+  listener: (() => void) | PurchaseRequestListener,
+): () => void {
   if (!isBrowser()) return () => undefined
+  if (event === 'purchase-request') {
+    // On the window, and not through the widget. The event is a native one, thus a listener
+    // needs no widget to attach to: it can start before load(), it stays through destroy(),
+    // and it also works with a copy of the widget that is older than this function. A
+    // subscription through the widget would give a listener that never runs with such a copy,
+    // because an older copy knows the name of no event but `session-change`.
+    const handler = listener as EventListener
+    window.addEventListener(PURCHASE_REQUEST_EVENT, handler)
+    return () => { window.removeEventListener(PURCHASE_REQUEST_EVENT, handler) }
+  }
   let cancelled = false
   let unsubscribe: (() => void) | undefined
   const subscribe = () => {
-    if (!cancelled && api) unsubscribe = api.on(event, listener)
+    if (!cancelled && api) unsubscribe = api.on('session-change', listener as () => void)
   }
   // Through whenLoaded(), and not through `loading`, because a subscription can
   // start before load(). The earlier form did nothing at all in that case.

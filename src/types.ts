@@ -13,8 +13,8 @@
  * cannot prevent one. Thus you must change the source file first. Then copy the
  * new text to this file. Do not do this in the opposite order.
  *
- * The check compares three declarations: `SizeUnit`, `PosterParams` and
- * `BUTTON_TEXT_LANGS`. Each of them is an exact copy. Do not edit the wording
+ * The check compares four declarations: `SizeUnit`, `PosterParams`,
+ * `PosterOffer` and `BUTTON_TEXT_LANGS`. Each of them is an exact copy. Do not edit the wording
  * inside them, or the check fails. The comments above them are the comments of
  * this package, and the check does not read them.
  */
@@ -118,6 +118,41 @@ export interface PosterParams {
    * frame carries is ignored, and the two values above then apply.
    */
   framePreset?: string
+  /**
+   * What this shop sells of this poster, for the action at the end of the preview (ADR 235).
+   *
+   * The widget reads it from the `data-poster-offers` attribute of the mount, as a JSON array.
+   * Each offer names one thing the shop sells: a size, and a frame that the shop published in its
+   * catalogue or `null` for a print with no frame. The `purchaseUrl` adds exactly that offer to
+   * the cart when a browser opens it; the `productUrl` shows it. The widget matches the size and
+   * the frame that the shopper selected against this list, and it never guesses: a selection that
+   * matches no offer, or two, opens the product page instead.
+   *
+   * The list never reaches the visualizer. A list of more than 250 offers is ignored whole.
+   */
+  offers?: PosterOffer[]
+}
+
+/**
+ * One thing the shop sells of this poster: a size, and a frame it published or no frame.
+ *
+ * The key is yours. SeeOnWall matches the selection of the shopper against this list and gives
+ * the key back to you; it does not read the key. Thus the key can be a variant id, a SKU, or
+ * anything else your storefront can act on.
+ */
+export interface PosterOffer {
+  /** Opaque to SeeOnWall. The storefront adapter owns its meaning. 1–255 characters. */
+  key: string
+  /** The forms of {@link PosterParams.posterWidth}. */
+  width: number | string
+  /** The forms of {@link PosterParams.posterHeight}. */
+  height: number | string
+  /** The name of a published frame preset of this shop (ADR 162); null means explicitly unframed. */
+  framePreset: string | null
+  /** The product page, preferably with this offer preselected. Relative to the page is fine. */
+  productUrl?: string
+  /** An HTTP(S) URL which adds exactly this offer when navigated to. Required for "Add to cart". */
+  purchaseUrl?: string
 }
 
 /**

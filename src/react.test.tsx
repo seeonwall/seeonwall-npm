@@ -220,6 +220,39 @@ describe('SeeOnWallButton', () => {
     ).toBe('#size-field select')
   })
 
+  it('writes the offers as JSON for the widget to match', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton
+        posterUrl="https://shop.example/p.jpg"
+        offers={[
+          { key: 'v1', width: 50, height: 70, framePreset: null, purchaseUrl: '/cart/add?v=1' },
+          { key: 'v2', width: 50, height: 70, framePreset: 'Oak', productUrl: '/p/dune?f=oak' },
+        ]}
+      />,
+    )
+
+    const written = container.querySelector('.seeonwall-button')?.getAttribute('data-poster-offers')
+    expect(JSON.parse(written ?? 'null')).toEqual([
+      { key: 'v1', width: 50, height: 70, framePreset: null, purchaseUrl: '/cart/add?v=1' },
+      { key: 'v2', width: 50, height: 70, framePreset: 'Oak', productUrl: '/p/dune?f=oak' },
+    ])
+  })
+
+  it('writes no offers attribute for an empty list', async () => {
+    // An empty list and no list give the widget the same thing to match against: nothing.
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" offers={[]} />,
+    )
+
+    expect(
+      container.querySelector('.seeonwall-button')?.hasAttribute('data-poster-offers'),
+    ).toBe(false)
+  })
+
   it('leaves out an attribute that you do not give', async () => {
     const { SeeOnWallButton } = await loadModule()
 

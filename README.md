@@ -53,6 +53,7 @@ Everything in `PosterParams`, plus:
 | prop | | |
 |---|---|---|
 | `posterSizes` | `string[]` or `string` | An array is joined with commas for you. |
+| `offers` | `PosterOffer[]` | What you sell of this poster, for the action at the end of the preview. |
 | `sizesFrom` | `auto` or a selector | Reads the sizes from a size control on the page instead. |
 | `className`, `style` | | Applied to the mount element. |
 | `variant` | `solid` \| `outline` \| `glyph` \| `icon` | The shape of the button. Default `solid`. |
@@ -129,6 +130,74 @@ other language reads the English label, and your English override if you set one
 Under `icon` the label is still resolved and translated — it becomes the accessible name and
 the tooltip — so this prop reaches a screen reader on a button that shows no text.
 
+### Buying from the preview
+
+The preview ends with the shopper looking at the poster on their wall, in a size and a frame they
+chose. `offers` says what you sell, so the preview can carry them to it:
+
+```tsx
+<SeeOnWallButton
+  posterUrl={product.image}
+  posterSizes={['30x40', '50x70']}
+  offers={[
+    { key: '4471', width: 30, height: 40, framePreset: null, purchaseUrl: '/cart/add?id=4471' },
+    { key: '4472', width: 50, height: 70, framePreset: null, purchaseUrl: '/cart/add?id=4472' },
+    { key: '4473', width: 50, height: 70, framePreset: 'Oak', purchaseUrl: '/cart/add?id=4473' },
+  ]}
+/>
+```
+
+Each offer is one thing you sell: a size, and the name of a frame you published in the SeeOnWall
+dashboard or `null` for a print with no frame. The `key` is yours — a variant id, a SKU, whatever
+your storefront acts on. SeeOnWall gives it back to you and never reads it.
+
+The widget matches the size and the frame the shopper selected against this list, on your page.
+The list never reaches the preview, so no storefront identifier goes into the iframe.
+
+| what the shopper selected | the button says |
+|---|---|
+| an offer with a `purchaseUrl` | **Add to cart**, and the browser opens that URL |
+| an offer with a `productUrl`, or a product page | **View product** |
+| a custom frame, a mat, or no match at all | nothing |
+
+Matching is exact or it is nothing. A size matches within 2 mm, a frame matches its preset name,
+and a selection that matches two offers matches none — the widget never picks the first of two. A
+preview and a cart line that disagree is worse than a shopper who chooses the frame once more.
+
+A URL that adds the item is the whole integration. There is no SeeOnWall SDK call to make and no
+JavaScript to write, and a shop with no offers keeps the preview it has today.
+
+#### Adding to the cart yourself
+
+If your storefront adds to the cart without leaving the page, take the request over:
+
+```ts
+import { on } from 'seeonwall'
+
+const unsubscribe = on('purchase-request', (event) => {
+  event.preventDefault() // From here the request is yours.
+  addToCart(event.detail.selectionKey)
+    .then(() => { window.location.assign('/cart') })
+    .catch(() => { event.detail.navigateFallback() })
+})
+```
+
+The event is a cancelable `seeonwall:purchase-request` on `window`, sent before the widget would
+navigate. `preventDefault()` takes the request; anything else leaves the widget to open the
+purchase URL as usual.
+
+`navigateFallback()` goes to the product page, and never to the purchase URL: a request that
+failed in an unknown way may have added the item already. It acts one time, and only while that
+preview is still the one on screen.
+
+Navigation is how the widget knows the request succeeded — the preview closes when the page starts
+to leave. A listener that neither navigates nor falls back leaves the shopper looking at the
+preview, and the action comes back after eight seconds.
+
+The event fires on a desktop preview. On a phone the preview is a tab of its own, and it navigates
+itself to the URL your offer gave; there is no listener on the shop tab, because a phone freezes
+that tab and a click that depended on it would do nothing.
+
 ### Sizes from a control on the page
 
 Some shops keep the print size in the size control the shopper uses — a dropdown or a set of
@@ -182,6 +251,15 @@ The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the m
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
 
+`data-poster-offers` carries the offers above as a JSON array, and works the same way:
+
+```html
+<div class="seeonwall-button"
+     data-poster-url="https://example.com/poster.jpg"
+     data-poster-sizes="30x40,50x70"
+     data-poster-offers='[{"key":"4471","width":30,"height":40,"framePreset":null,"purchaseUrl":"/cart/add?id=4471"}]'></div>
+```
+
 `data-button-text-en`, and the same attribute for any other language of `BUTTON_TEXT_LANGS`,
 replaces the label the widget would write.
 
@@ -226,6 +304,7 @@ the part of your app that uses SeeOnWall.
 | `isSessionReady()` | Returns the cached readiness hint for the current shop session. It is for optional fast wall preview controls, never authorization. |
 | `refreshSessionState()` | Refreshes the safe session hint and resolves to `none`, `creating`, `ready`, or `expired`. |
 | `on('session-change', listener)` | Reacts to session changes in this or another same-origin shop tab. Returns an unsubscribe function. |
+| `on('purchase-request', listener)` | Reacts to **Add to cart** in a desktop preview, to add the item yourself. Returns an unsubscribe function. |
 | `openCataloguePreview(params)` | Previews one poster on the wall the shopper already prepared. Resolves to `{ opened: true }` or a reason. |
 | `whenLoaded()` | Resolves once the widget is available, including when `load()` has not been called yet. |
 | `destroy()` | Stops the widget and removes everything it added. |
@@ -248,7 +327,8 @@ From `seeonwall/react`:
 | `sizeUnit` | optional | `"cm"` (default) or `"in"`. The fallback for sizes that do not state a unit. |
 | `embedUrl` | optional | A different visualizer origin. Only if you proxy the embed. |
 
-TypeScript types ship with the package. `PosterParams` and `SizeUnit` are exported.
+TypeScript types ship with the package. `PosterParams`, `PosterOffer` and `SizeUnit` are
+exported.
 
 ### Storefront readiness
 

@@ -1,10 +1,10 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import type { CSSProperties, ReactElement } from 'react'
 import { load, destroy, isSessionReady, on, whenLoaded, BUTTON_TEXT_LANGS } from './index.js'
-import type { ButtonTextLang, LoadOptions, PosterParams } from './index.js'
+import type { ButtonTextLang, LoadOptions, PosterOffer, PosterParams } from './index.js'
 
 export { BUTTON_TEXT_LANGS }
-export type { ButtonTextLang, LoadOptions, PosterParams }
+export type { ButtonTextLang, LoadOptions, PosterOffer, PosterParams }
 
 /**
  * The number of components that use the widget at this moment.
@@ -269,6 +269,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     frameDefaultCm,
     frameDefaultColor,
     framePreset,
+    offers,
     variant,
     fullWidth,
     backgroundColor,
@@ -301,6 +302,11 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-frame-default-cm', frameDefaultCm)
   attr(attributes, 'data-frame-default-color', frameDefaultColor)
   attr(attributes, 'data-frame-preset', framePreset)
+  // The widget reads the offers as JSON from one attribute. An empty list is not written: the
+  // widget then has nothing to match, which is what an absent attribute already means.
+  if (offers && offers.length > 0) {
+    attributes['data-poster-offers'] = JSON.stringify(offers)
+  }
   // A mount with no attribute is a solid button to the widget. Thus the default
   // shape writes nothing, and the markup stays as it was before the shapes came.
   if (variant !== undefined && variant !== 'solid') {
