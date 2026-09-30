@@ -224,6 +224,24 @@ Most storefronts built with this package know their sizes and should pass them i
 `posterSizes`. Reach for `sizesFrom` when the size control belongs to a plugin or to a part of
 the page you do not control.
 
+### A mat in the product
+
+When the print you sell comes in a mat, `posterMat` shows it in the preview:
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} posterSizes="30x40" posterMat="21x30:30x40" />
+```
+
+| `posterMat` | |
+|---|---|
+| `"3"` or `"50x70:5"` | A mat of that width inside the size. The artwork is smaller. |
+| `"21x30:30x40"` | The 21x30 print in a 30x40 mat. The mat goes around the print. |
+| `"30x40:21x30"` | A 30x40 with a 21x30 window. The mat goes inside the size. |
+
+A number without a unit is in the size unit. `posterMatColor` sets the colour as `#RRGGBB`, and
+the mat is white without it. The visualizer ignores a value it cannot read, so an error gives a
+preview with no mat.
+
 ## Vanilla JavaScript
 
 ```js
@@ -250,6 +268,8 @@ without another call to `load()`.
 The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the mount, and
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
+
+`data-poster-mat` and `data-poster-mat-color` carry the mat above.
 
 `data-poster-offers` carries the offers above as a JSON array, and works the same way:
 

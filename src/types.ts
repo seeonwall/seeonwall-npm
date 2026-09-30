@@ -77,6 +77,20 @@ export interface PosterParams {
    */
   posterInset?: string
   /**
+   * A mat that is part of the product (ADR 250), for each size:
+   *
+   * - `"3"` or `"50x70:5"`: a mat of that width inside the size; the artwork is smaller.
+   * - `"21x30:30x40"`: the 21x30 print in a 30x40 mat; the mat goes around the print.
+   * - `"30x40:21x30"`: a 30x40 with a 21x30 window; the mat goes inside the size.
+   *
+   * A size gives each axis its own width. A number without a unit is in the size unit.
+   *
+   * The widget sends this value without a change. The visualizer ignores what it cannot read.
+   */
+  posterMat?: string
+  /** The colour of {@link posterMat}, as `#RRGGBB`. White when absent. */
+  posterMatColor?: string
+  /**
    * The address of the product page for this poster.
    *
    * A bookmark uses this address. Without it, a bookmark uses the address of
