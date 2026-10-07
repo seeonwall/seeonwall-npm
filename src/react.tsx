@@ -266,6 +266,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     posterInset,
     posterMat,
     posterMatColor,
+    posterFit,
     productPageUrl,
     lang,
     frameDefaultCm,
@@ -301,6 +302,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-poster-inset', posterInset)
   attr(attributes, 'data-poster-mat', posterMat)
   attr(attributes, 'data-poster-mat-color', posterMatColor)
+  attr(attributes, 'data-poster-fit', posterFit)
   attr(attributes, 'data-product-page-url', productPageUrl)
   attr(attributes, 'data-lang', lang)
   attr(attributes, 'data-frame-default-cm', frameDefaultCm)

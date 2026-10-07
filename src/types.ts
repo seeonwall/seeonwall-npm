@@ -21,6 +21,9 @@
 
 export type SizeUnit = 'cm' | 'in'
 
+/** How the preview puts the image into a size of other proportions (ADR 260). */
+export type PosterFit = 'cover' | 'stretch'
+
 export interface PosterParams {
   posterUrl: string
   posterTitle?: string
@@ -91,6 +94,11 @@ export interface PosterParams {
   /** The colour of {@link posterMat}, as `#RRGGBB`. White when absent. */
   posterMatColor?: string
   /**
+   * How the image goes into a size of other proportions (ADR 260). `cover` crops it, as
+   * CSS `object-fit: cover` does. `stretch` distorts it. The preview uses `cover` when absent.
+   */
+  posterFit?: PosterFit
+  /**
    * The address of the product page for this poster.
    *
    * A bookmark uses this address. Without it, a bookmark uses the address of
@@ -137,10 +145,11 @@ export interface PosterParams {
    *
    * The widget reads it from the `data-poster-offers` attribute of the mount, as a JSON array.
    * Each offer names one thing the shop sells: a size, and a frame that the shop published in its
-   * catalogue or `null` for a print with no frame. The `purchaseUrl` adds exactly that offer to
-   * the cart when a browser opens it; the `productUrl` shows it. The widget matches the size and
-   * the frame that the shopper selected against this list, and it never guesses: a selection that
-   * matches no offer, or two, opens the product page instead.
+   * catalogue or `null` for a print with no frame. A `null` offer also serves a custom frame of the
+   * shopper (ADR 263). The `purchaseUrl` adds exactly that offer to the cart when a browser opens
+   * it; the `productUrl` shows it. The widget matches the size and the frame that the shopper
+   * selected against this list, and it never guesses: a selection that matches no offer, or two,
+   * opens the product page instead.
    *
    * The list never reaches the visualizer. A list of more than 250 offers is ignored whole.
    */
@@ -177,7 +186,7 @@ export interface PosterOffer {
  * language that is not in this list gets the English label, and the English
  * replacement if you give one.
  */
-export const BUTTON_TEXT_LANGS = ['en', 'pl', 'de', 'es', 'fr', 'it', 'pt', 'nl', 'sv', 'nb', 'da'] as const
+export const BUTTON_TEXT_LANGS = ['en', 'pl', 'de', 'es', 'fr', 'it', 'pt', 'nl', 'sv', 'nb', 'da', 'fi'] as const
 
 /** One language of {@link BUTTON_TEXT_LANGS}. */
 export type ButtonTextLang = (typeof BUTTON_TEXT_LANGS)[number]

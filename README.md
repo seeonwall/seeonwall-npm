@@ -124,7 +124,7 @@ The widget labels the button itself, in each of the languages it knows, and foll
 A string is used in every language. An object replaces the label of the languages it names
 and leaves the rest translated, so a shop that has wording for two of its languages keeps the
 widget's wording for the others. The keys are the languages in `BUTTON_TEXT_LANGS`, exported
-from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`. A shopper on any
+from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`, `fi`. A shopper on any
 other language reads the English label, and your English override if you set one.
 
 Under `icon` the label is still resolved and translated — it becomes the accessible name and
@@ -148,7 +148,8 @@ chose. `offers` says what you sell, so the preview can carry them to it:
 ```
 
 Each offer is one thing you sell: a size, and the name of a frame you published in the SeeOnWall
-dashboard or `null` for a print with no frame. The `key` is yours — a variant id, a SKU, whatever
+dashboard or `null` for a print with no frame. A frame the shopper made in the preview matches the
+`null` offer of its size, because the shop sells them the print alone. The `key` is yours — a variant id, a SKU, whatever
 your storefront acts on. SeeOnWall gives it back to you and never reads it.
 
 The widget matches the size and the frame the shopper selected against this list, on your page.
@@ -158,7 +159,8 @@ The list never reaches the preview, so no storefront identifier goes into the if
 |---|---|
 | an offer with a `purchaseUrl` | **Add to cart**, and the browser opens that URL |
 | an offer with a `productUrl`, or a product page | **View product** |
-| a custom frame, a mat, or no match at all | nothing |
+| a frame of their own, on an offer with `framePreset: null` | the same as that offer |
+| a mat in a frame you sell, or no match at all | nothing |
 
 Matching is exact or it is nothing. A size matches within 2 mm, a frame matches its preset name,
 and a selection that matches two offers matches none — the widget never picks the first of two. A
@@ -196,7 +198,9 @@ preview, and the action comes back after eight seconds.
 
 The event fires on a desktop preview. On a phone the preview is a tab of its own, and it navigates
 itself to the URL your offer gave; there is no listener on the shop tab, because a phone freezes
-that tab and a click that depended on it would do nothing.
+that tab and a click that depended on it would do nothing. When the browser blocks that tab after a
+tap — an in-app browser, a popup blocker — the shop tab itself goes to the preview, which then links
+back to the product page.
 
 ### Sizes from a control on the page
 
@@ -242,6 +246,16 @@ A number without a unit is in the size unit. `posterMatColor` sets the colour as
 the mat is white without it. The visualizer ignores a value it cannot read, so an error gives a
 preview with no mat.
 
+### When the image and the size disagree
+
+An image with other proportions than the size — one photo sold as 45x60 and as 80x120 — is cropped
+to the size from its centre, as CSS `object-fit: cover` crops. `posterFit="stretch"` distorts the
+image to the size instead, as the preview did before.
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} posterSizes="45x60,80x120" posterFit="stretch" />
+```
+
 ## Vanilla JavaScript
 
 ```js
@@ -269,7 +283,8 @@ The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the m
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
 
-`data-poster-mat` and `data-poster-mat-color` carry the mat above.
+`data-poster-mat` and `data-poster-mat-color` carry the mat above, and `data-poster-fit="stretch"`
+the fit.
 
 `data-poster-offers` carries the offers above as a JSON array, and works the same way:
 
@@ -347,8 +362,8 @@ From `seeonwall/react`:
 | `sizeUnit` | optional | `"cm"` (default) or `"in"`. The fallback for sizes that do not state a unit. |
 | `embedUrl` | optional | A different visualizer origin. Only if you proxy the embed. |
 
-TypeScript types ship with the package. `PosterParams`, `PosterOffer` and `SizeUnit` are
-exported.
+TypeScript types ship with the package. `PosterParams`, `PosterOffer`, `PosterFit` and
+`SizeUnit` are exported.
 
 ### Storefront readiness
 

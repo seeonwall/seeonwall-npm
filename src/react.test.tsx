@@ -299,6 +299,16 @@ describe('SeeOnWallButton', () => {
     expect(container.querySelector('.seeonwall-button')?.hasAttribute('data-frame-preset')).toBe(false)
   })
 
+  it('passes the poster fit', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" posterFit="stretch" />,
+    )
+
+    expect(container.querySelector('.seeonwall-button')?.getAttribute('data-poster-fit')).toBe('stretch')
+  })
+
   it('passes the shape of the button', async () => {
     const { SeeOnWallButton } = await loadModule()
 
