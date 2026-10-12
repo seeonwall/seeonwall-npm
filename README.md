@@ -248,9 +248,10 @@ preview with no mat.
 
 ### When the image and the size disagree
 
-An image with other proportions than the size — one photo sold as 45x60 and as 80x120 — is cropped
-to the size from its centre, as CSS `object-fit: cover` crops. `posterFit="stretch"` distorts the
-image to the size instead, as the preview did before.
+An image with other proportions than the size — one photo sold as 45x60 and as 80x120 — is
+distorted to the size by up to 8%, and the remainder is cropped from its centre. This is
+`posterFit="auto"`, the default. `posterFit="cover"` only crops, as CSS `object-fit: cover` crops.
+`posterFit="stretch"` only distorts.
 
 ```tsx
 <SeeOnWallButton posterUrl={product.image} posterSizes="45x60,80x120" posterFit="stretch" />
@@ -283,7 +284,7 @@ The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the m
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
 
-`data-poster-mat` and `data-poster-mat-color` carry the mat above, and `data-poster-fit="stretch"`
+`data-poster-mat` and `data-poster-mat-color` carry the mat above, and `data-poster-fit`
 the fit.
 
 `data-poster-offers` carries the offers above as a JSON array, and works the same way:

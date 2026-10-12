@@ -21,8 +21,8 @@
 
 export type SizeUnit = 'cm' | 'in'
 
-/** How the preview puts the image into a size of other proportions (ADR 260). */
-export type PosterFit = 'cover' | 'stretch'
+/** How the preview puts the image into a size of other proportions (ADR 260, ADR 276). */
+export type PosterFit = 'auto' | 'cover' | 'stretch'
 
 export interface PosterParams {
   posterUrl: string
@@ -94,8 +94,9 @@ export interface PosterParams {
   /** The colour of {@link posterMat}, as `#RRGGBB`. White when absent. */
   posterMatColor?: string
   /**
-   * How the image goes into a size of other proportions (ADR 260). `cover` crops it, as
-   * CSS `object-fit: cover` does. `stretch` distorts it. The preview uses `cover` when absent.
+   * How the image goes into a size of other proportions (ADR 260, ADR 276). `cover` crops it, as
+   * CSS `object-fit: cover` does. `stretch` distorts it. `auto` distorts it by up to 8% and crops
+   * the remainder. The preview uses `auto` when absent.
    */
   posterFit?: PosterFit
   /**
