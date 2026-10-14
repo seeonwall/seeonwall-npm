@@ -124,7 +124,7 @@ The widget labels the button itself, in each of the languages it knows, and foll
 A string is used in every language. An object replaces the label of the languages it names
 and leaves the rest translated, so a shop that has wording for two of its languages keeps the
 widget's wording for the others. The keys are the languages in `BUTTON_TEXT_LANGS`, exported
-from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`, `fi`. A shopper on any
+from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`, `fi`, `cs`, `sk`. A shopper on any
 other language reads the English label, and your English override if you set one.
 
 Under `icon` the label is still resolved and translated — it becomes the accessible name and
