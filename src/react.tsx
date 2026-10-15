@@ -272,6 +272,8 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     frameDefaultCm,
     frameDefaultColor,
     framePreset,
+    frameOptions,
+    frameSizeIncluded,
     offers,
     variant,
     fullWidth,
@@ -308,6 +310,13 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   attr(attributes, 'data-frame-default-cm', frameDefaultCm)
   attr(attributes, 'data-frame-default-color', frameDefaultColor)
   attr(attributes, 'data-frame-preset', framePreset)
+  // An empty list is not written: the widget ignores it as a list that is not valid.
+  if (frameOptions && frameOptions.length > 0) {
+    attributes['data-frame-options'] = JSON.stringify(frameOptions)
+  }
+  if (frameSizeIncluded === true) {
+    attributes['data-frame-size-included'] = 'true'
+  }
   // The widget reads the offers as JSON from one attribute. An empty list is not written: the
   // widget then has nothing to match, which is what an absent attribute already means.
   if (offers && offers.length > 0) {

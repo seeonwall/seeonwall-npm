@@ -142,6 +142,24 @@ export interface PosterParams {
    */
   framePreset?: string
   /**
+   * The frames that the shopper can pick (ADR 282).
+   *
+   * The widget reads it from the `data-frame-options` attribute of the mount, as a JSON array.
+   * Each entry is the name of a frame preset of the shop, or `null` for no frame. The preview
+   * offers only these frames. With one entry, the preview shows that frame and hides the frame
+   * controls. A list that is not valid is ignored whole, and the shopper can then pick any frame.
+   * Without a list, the frame setting of the shop applies.
+   */
+  frameOptions?: (string | null)[]
+  /**
+   * True when the declared size of the poster includes the frame (ADR 282).
+   *
+   * The widget reads it from `data-frame-size-included="true"`. The preview then draws the
+   * artwork smaller by two frame widths, so the frame and the artwork together have the declared
+   * size. It applies only with a {@link frameOptions} list that names at least one preset.
+   */
+  frameSizeIncluded?: boolean
+  /**
    * What this shop sells of this poster, for the action at the end of the preview (ADR 235).
    *
    * The widget reads it from the `data-poster-offers` attribute of the mount, as a JSON array.

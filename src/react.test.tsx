@@ -291,6 +291,34 @@ describe('SeeOnWallButton', () => {
     expect(mount?.getAttribute('data-frame-preset')).toBe('Oak')
   })
 
+  it('writes the frames that the shopper can pick', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton
+        posterUrl="https://shop.example/p.jpg"
+        frameOptions={['Black', 'Oak', null]}
+        frameSizeIncluded
+      />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    expect(mount?.getAttribute('data-frame-options')).toBe('["Black","Oak",null]')
+    expect(mount?.getAttribute('data-frame-size-included')).toBe('true')
+  })
+
+  it('leaves out an empty frame list and a false size flag', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <SeeOnWallButton posterUrl="https://shop.example/p.jpg" frameOptions={[]} frameSizeIncluded={false} />,
+    )
+    const mount = container.querySelector('.seeonwall-button')
+
+    expect(mount?.hasAttribute('data-frame-options')).toBe(false)
+    expect(mount?.hasAttribute('data-frame-size-included')).toBe(false)
+  })
+
   it('leaves out a frame preset that you do not give', async () => {
     const { SeeOnWallButton } = await loadModule()
 

@@ -246,6 +246,23 @@ A number without a unit is in the size unit. `posterMatColor` sets the colour as
 the mat is white without it. The visualizer ignores a value it cannot read, so an error gives a
 preview with no mat.
 
+### The frames the shopper can pick
+
+`frameOptions` limits the frames in the preview to the ones you sell. Each entry is the name of a
+frame you published in the SeeOnWall dashboard, or `null` for no frame:
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} posterSizes="50x70" frameOptions={['Black', 'Oak', null]} />
+```
+
+With one entry, the preview always shows that frame and hides the frame controls. `[null]` suits a
+product image that already shows the frame. Without the prop, the frame setting of your shop in the
+dashboard applies. A list that is not valid is ignored, and the shopper can pick any frame.
+
+When the size of the product is the outer size of the framed piece, add `frameSizeIncluded`. The
+preview then draws the artwork smaller by two frame widths, so the framed piece keeps the size in
+every frame. It applies only when `frameOptions` names at least one frame.
+
 ### When the image and the size disagree
 
 An image with other proportions than the size — one photo sold as 45x60 and as 80x120 — is
