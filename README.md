@@ -52,7 +52,7 @@ Everything in `PosterParams`, plus:
 
 | prop | | |
 |---|---|---|
-| `posterSizes` | `string[]` or `string` | An array is joined with commas for you. |
+| `posterSizes` | `string[]` or `string` | An array is joined with commas for you. `'Large=50x70cm'` names a size: the size button shows the name with the size beside it. |
 | `offers` | `PosterOffer[]` | What you sell of this poster, for the action at the end of the preview. |
 | `sizesFrom` | `auto` or a selector | Reads the sizes from a size control on the page instead. |
 | `className`, `style` | | Applied to the mount element. |

@@ -62,6 +62,10 @@ export interface PosterParams {
    * unit. Examples are "30x40,50x70", "12x16in,18x24in" and "a4,a3,50x70cm". An
    * item without a unit uses {@link sizeUnit}.
    *
+   * An item can start with a name and `=`, for example "Large=50x70cm" (ADR 284). The size
+   * button shows the name with the size beside it. A name has at most 32 characters, and it
+   * cannot contain `,` or `=`. The whole list has at most 1000 characters.
+   *
    * The visualizer shows a size selector when there is more than one item.
    */
   posterSizes?: string
@@ -195,6 +199,19 @@ export interface PosterOffer {
   productUrl?: string
   /** An HTTP(S) URL which adds exactly this offer when navigated to. Required for "Add to cart". */
   purchaseUrl?: string
+  /**
+   * An https image of exactly this variant: this size in this frame (ADR 285). The preview shows
+   * it when the shopper selects this size and frame, so a shop can show its own photo of each.
+   */
+  image?: string
+  /**
+   * `"inherit"` (the default): the preview draws the selected frame on {@link image}.
+   * `"forbidden"`: the image already shows the frame, or must have none. The preview shows it as
+   * it is, at the outer size of the variant.
+   */
+  drawFrame?: 'inherit' | 'forbidden'
+  /** The name of this size on the size buttons of the preview. At most 32 characters. */
+  label?: string
 }
 
 /**
