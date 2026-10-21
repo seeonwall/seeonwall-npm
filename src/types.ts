@@ -175,6 +175,8 @@ export interface PosterParams {
    * opens the product page instead.
    *
    * The list never reaches the visualizer. A list of more than 250 offers is ignored whole.
+   * Up to 200 offers can have an `image`, in a stored list of up to 54,000 characters. Over a
+   * limit, no offer image is used.
    */
   offers?: PosterOffer[]
 }
