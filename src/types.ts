@@ -164,6 +164,13 @@ export interface PosterParams {
    */
   frameSizeIncluded?: boolean
   /**
+   * False when this poster always hangs alone on a wall (ADR 294).
+   *
+   * The widget reads it from `data-gallery-wall="off"`. The shopper then cannot add other
+   * posters to a wall that shows this poster. Absent or true: the poster can share a wall.
+   */
+  galleryWall?: boolean
+  /**
    * What this shop sells of this poster, for the action at the end of the preview (ADR 235).
    *
    * The widget reads it from the `data-poster-offers` attribute of the mount, as a JSON array.
