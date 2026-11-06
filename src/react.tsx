@@ -274,6 +274,7 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
     framePreset,
     frameOptions,
     frameSizeIncluded,
+    galleryWall,
     offers,
     variant,
     fullWidth,
@@ -316,6 +317,10 @@ export function SeeOnWallButton(props: SeeOnWallButtonProps): ReactElement {
   }
   if (frameSizeIncluded === true) {
     attributes['data-frame-size-included'] = 'true'
+  }
+  // Only `false` is written: the widget reads `off` and treats any other value as a shared wall.
+  if (galleryWall === false) {
+    attributes['data-gallery-wall'] = 'off'
   }
   // The widget reads the offers as JSON from one attribute. An empty list is not written: the
   // widget then has nothing to match, which is what an absent attribute already means.

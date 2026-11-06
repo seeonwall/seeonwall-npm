@@ -124,7 +124,7 @@ The widget labels the button itself, in each of the languages it knows, and foll
 A string is used in every language. An object replaces the label of the languages it names
 and leaves the rest translated, so a shop that has wording for two of its languages keeps the
 widget's wording for the others. The keys are the languages in `BUTTON_TEXT_LANGS`, exported
-from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`, `fi`, `cs`, `sk`. A shopper on any
+from the package: `en`, `pl`, `de`, `es`, `fr`, `it`, `pt`, `nl`, `sv`, `nb`, `da`, `fi`, `cs`, `sk`, `uk`, `ru`. A shopper on any
 other language reads the English label, and your English override if you set one.
 
 Under `icon` the label is still resolved and translated — it becomes the accessible name and
@@ -263,6 +263,15 @@ When the size of the product is the outer size of the framed piece, add `frameSi
 preview then draws the artwork smaller by two frame widths, so the framed piece keeps the size in
 every frame. It applies only when `frameOptions` names at least one frame.
 
+### A poster that hangs alone
+
+The shopper can add other posters to the wall in the preview. `galleryWall={false}` keeps this
+poster alone on its wall, for a piece that is not sold as part of a set:
+
+```tsx
+<SeeOnWallButton posterUrl={product.image} galleryWall={false} />
+```
+
 ### When the image and the size disagree
 
 An image with other proportions than the size — one photo sold as 45x60 and as 80x120 — is
@@ -301,8 +310,8 @@ The shapes above are `data-button-variant="outline" | "glyph" | "icon"` on the m
 `data-button-width="full"` stretches the button to its container. `data-sizes-from="auto"`, or a
 selector in the same attribute, reads the sizes from a size control on the page.
 
-`data-poster-mat` and `data-poster-mat-color` carry the mat above, and `data-poster-fit`
-the fit.
+`data-poster-mat` and `data-poster-mat-color` carry the mat above, `data-poster-fit`
+the fit, and `data-gallery-wall="off"` keeps the poster alone on its wall.
 
 `data-poster-offers` carries the offers above as a JSON array, and works the same way:
 

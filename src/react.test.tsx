@@ -319,6 +319,21 @@ describe('SeeOnWallButton', () => {
     expect(mount?.hasAttribute('data-frame-size-included')).toBe(false)
   })
 
+  it('writes galleryWall only when it is false', async () => {
+    const { SeeOnWallButton } = await loadModule()
+
+    const { container } = render(
+      <>
+        <SeeOnWallButton posterUrl="https://shop.example/a.jpg" galleryWall={false} />
+        <SeeOnWallButton posterUrl="https://shop.example/b.jpg" galleryWall />
+      </>,
+    )
+    const [alone, shared] = container.querySelectorAll('.seeonwall-button')
+
+    expect(alone?.getAttribute('data-gallery-wall')).toBe('off')
+    expect(shared?.hasAttribute('data-gallery-wall')).toBe(false)
+  })
+
   it('leaves out a frame preset that you do not give', async () => {
     const { SeeOnWallButton } = await loadModule()
 
