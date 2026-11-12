@@ -21,6 +21,9 @@
 
 export type SizeUnit = 'cm' | 'in'
 
+/** The view mode of a button: `2d` shows no AR, `auto` adds AR, `ar` shows AR only. */
+export type ViewMode = 'auto' | '2d' | 'ar'
+
 /** How the preview puts the image into a size of other proportions (ADR 260, ADR 276). */
 export type PosterFit = 'auto' | 'cover' | 'stretch'
 
@@ -170,6 +173,20 @@ export interface PosterParams {
    * posters to a wall that shows this poster. Absent or true: the poster can share a wall.
    */
   galleryWall?: boolean
+  /**
+   * The view mode of this button (ADR 341 section 5): `2d` shows no AR, `auto` adds AR to the
+   * photo and the room, `ar` shows AR only.
+   *
+   * The widget reads it from `data-mode`. Absent or unknown: the shop default applies. The shop
+   * setting can still turn AR off.
+   */
+  mode?: ViewMode
+  /**
+   * False when this poster has no AR (ADR 341 section 7).
+   *
+   * The widget reads it from `data-ar="off"`. Absent or true: the mode applies.
+   */
+  ar?: boolean
   /**
    * What this shop sells of this poster, for the action at the end of the preview (ADR 235).
    *
