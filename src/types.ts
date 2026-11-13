@@ -182,9 +182,10 @@ export interface PosterParams {
    */
   mode?: ViewMode
   /**
-   * False when this poster has no AR (ADR 341 section 7).
+   * False when this poster has no AR (ADR 341 section 7). True when it has AR on, which a shop
+   * that shows AR on chosen products only needs (section 15).
    *
-   * The widget reads it from `data-ar="off"`. Absent or true: the mode applies.
+   * The widget reads it from `data-ar="off"` and `data-ar="on"`. Absent: the shop decides.
    */
   ar?: boolean
   /**
