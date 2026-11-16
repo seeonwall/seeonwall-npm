@@ -189,6 +189,22 @@ export interface PosterParams {
    */
   ar?: boolean
   /**
+   * The depth of the print (ADR 341 section 14). For a canvas, it is the depth of the stretcher.
+   *
+   * The widget reads it from `data-print-depth`. A number is in the size unit of the button. A
+   * text can have its own unit, for example "4cm" or "1.5in". The depth must be more than 0 and
+   * at most 10 cm. Absent: the 3D view and AR show a paper print.
+   */
+  printDepth?: string | number
+  /**
+   * The sides of the print (ADR 341 section 14): `wrap` puts the outer part of the image on the
+   * sides, `mirror` puts a mirror image of the edge on them, and `#rrggbb` gives them a colour.
+   *
+   * The widget reads it from `data-print-edge`. The sides show on a print with no frame or in a
+   * float frame. Absent: the default of the shop applies.
+   */
+  printEdge?: string
+  /**
    * What this shop sells of this poster, for the action at the end of the preview (ADR 235).
    *
    * The widget reads it from the `data-poster-offers` attribute of the mount, as a JSON array.
